@@ -1,0 +1,57 @@
+﻿
+services:
+  db:
+    image: postgres
+    container_name: postgresBD
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}    
+    command: postgres -c timezone=Asia/Yekaterinburg
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U my_user -d BDTimetracking"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+        - default
+    volumes:
+        - postgres_data:/var/lib/postgresql/data
+
+  timetracking_api:
+    container_name: timetracking_api.local
+    build:
+      context: .
+      target: final
+    environment:
+      DATABASE_URL: 'postgresql://my_user:qwer019asd@postgres:5432/BDTimetracking'
+    ports:
+      - "8080:8080" 
+    depends_on:
+      - db
+    networks:
+        - default
+
+  migrate:
+    container_name: migrate_db
+    build:
+      context: .
+      target: build 
+    entrypoint: ["dotnet", "ef", "database", "update"]
+    environment:
+      DATABASE_URL: 'postgresql://my_user:qwer019asd@db:5432/BDTimetracking'
+    depends_on:
+      - db
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
+
