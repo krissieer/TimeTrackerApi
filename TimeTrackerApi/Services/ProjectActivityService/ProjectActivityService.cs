@@ -22,9 +22,11 @@ public class ProjectActivityService: IProjectActivityService
     public async Task<ProjectActivity> AddProjectActivity(int activityId, string projectId)
     {
         Task<bool> flag = CheckProjectActivity(activityId, projectId);
-        bool isExist = await flag;
+        bool isExistInProjectActivities = await flag;
 
-        if (!isExist)
+        bool isExistInProjects = await context.Projects.AnyAsync(p => p.Id == projectId);
+
+        if (!isExistInProjectActivities & isExistInProjects)
         {
             var projectActivity = new ProjectActivity
             {
@@ -49,6 +51,12 @@ public class ProjectActivityService: IProjectActivityService
         return await context.ProjectActivities.AnyAsync(a => a.ActivityId == activityId && a.ProjectId == projectId);
     }
 
+    /// <summary>
+    /// Удалить запись из таблицы "Активности проекта"
+    /// </summary>
+    /// <param name="activityId"></param>
+    /// <param name="projectId"></param>
+    /// <returns></returns>
     public async Task<bool> DeleteProjectActivity(int activityId, string projectId)
     {
         var projectActivity = await context.ProjectActivities.FirstOrDefaultAsync(a => a.ActivityId == activityId && a.ProjectId == projectId);

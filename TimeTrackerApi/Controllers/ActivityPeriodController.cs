@@ -55,17 +55,13 @@ public class ActivityPeriodController : ControllerBase
     public async Task<ActionResult<string>> StopTracking(int activityId)
     {
         TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
-
         var result = await activityPeriodService.StopTracking(activityId);
-
         if (result is null)
             return BadRequest("Failed to stop tracking.");
 
-        //string formattedResult = $"StartTime: {result.StartTime}, StopTime: {result.StopTime.ToLocalTime()}, TotalTine: {result.TotalTime}";
         string formattedResult = $"StartTime: {TimeZoneInfo.ConvertTimeFromUtc(result.StartTime, tz)}, " +
                                  $"StopTime: {TimeZoneInfo.ConvertTimeFromUtc(result.StopTime, tz)}, " +
                                  $"TotalTime: {result.TotalTime}";
-
         return Ok(formattedResult);
     }
 

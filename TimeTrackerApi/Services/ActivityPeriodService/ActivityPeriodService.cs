@@ -46,6 +46,7 @@ public class ActivityPeriodService: IActivityPeriodService
         if (activityPeriod is null)
             return null;
         var timeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
+
         if (data1.HasValue)
         {
             var local = DateTime.SpecifyKind(data1.Value, DateTimeKind.Unspecified);
@@ -98,7 +99,7 @@ public class ActivityPeriodService: IActivityPeriodService
             return -1;
         }
         activity.StatusId = 2;
-        bool c = await context.SaveChangesAsync() >= 1;
+        await context.SaveChangesAsync();
         return 1;
     }
 
@@ -110,7 +111,7 @@ public class ActivityPeriodService: IActivityPeriodService
     public async Task<ActivityPeriod> StopTracking(int activityId)
     {
         var result = await SetStopTime(activityId);
-        Console.WriteLine($"ЛОГ В StopTracking. Начало: {result.StartTime}, Конец: {result.StopTime}, Всего: {result.TotalTime}");
+        //Console.WriteLine($"ЛОГ В StopTracking. Начало: {result.StartTime}, Конец: {result.StopTime}, Всего: {result.TotalTime}");
         if (result is null)
             return null;
 
@@ -129,20 +130,14 @@ public class ActivityPeriodService: IActivityPeriodService
     public async Task<ActivityPeriod> SetStopTime(int activityId)
     {
         var startTime = await GetStartTimeById(activityId);
-        Console.WriteLine($"Получено время начала UTC: {startTime}");
 
         var activityPeriod = await context.ActivityPeriods.FirstOrDefaultAsync(a => a.ActivityId == activityId && a.StartTime == startTime);
         if (activityPeriod is null)
             return null;
 
         DateTime stopTime = DateTime.Now;
-
         DateTime time = DateTime.SpecifyKind(stopTime, DateTimeKind.Unspecified);
-
         activityPeriod.StopTime = time;
-
-        Console.WriteLine($"Время конца, записанное в в БД: {time}");
-
         TimeSpan result = stopTime - startTime;
         activityPeriod.TotalTime = result;
         activityPeriod.TotalSeconds = (long)result.TotalSeconds;
@@ -163,7 +158,6 @@ public class ActivityPeriodService: IActivityPeriodService
         if (activityPeriod == null)
             throw new Exception("Start time not found for the given activity ID.");
 
-        Console.WriteLine($"Время: {activityPeriod.StartTime}");
         return activityPeriod.StartTime;
         
     }
@@ -183,6 +177,13 @@ public class ActivityPeriodService: IActivityPeriodService
         return await context.SaveChangesAsync() >= 1;
     }
 
+    /// <summary>
+    /// Получение статистики
+    /// </summary>
+    /// <param name="activityId"></param>
+    /// <param name="firstdata"></param>
+    /// <param name="seconddata"></param>
+    /// <returns></returns>
     public async Task<TimeSpan> GetStatistic(int activityId, DateTime? firstdata = null, DateTime? seconddata = null)
     {
         var query = context.ActivityPeriods.AsQueryable();

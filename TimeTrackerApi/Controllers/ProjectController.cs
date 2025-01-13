@@ -24,7 +24,7 @@ namespace TimeTrackerApi.Controllers
             var project = await projectService.AddProject(id, name);
             if (project == null)
             {
-                return BadRequest("Project with the given ID already exists.");
+                return BadRequest("Project already exists.");
             }
             return Ok(project);
         }

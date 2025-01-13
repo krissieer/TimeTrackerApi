@@ -22,7 +22,7 @@ public class ProjectActivityController : ControllerBase
     {
         var result = await projectActivityService.AddProjectActivity(activityId, projectId);
         if (result == null)
-            return Conflict("Activity already exists for this project.");
+            return Conflict("Activity already exists for this project or project does not exist");
         return Ok(result);
     }
 

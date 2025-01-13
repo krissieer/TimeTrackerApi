@@ -146,8 +146,7 @@ public class ActivityService: IActivityService
         if (activity is null)
             return false;
         context.Activities.Remove(activity);
-        await context.SaveChangesAsync();
-        return true;
+        return await context.SaveChangesAsync() >= 1;
     }
 
     /// <summary>
@@ -191,6 +190,12 @@ public class ActivityService: IActivityService
         return await context.SaveChangesAsync() >=1;
     }
 
+    /// <summary>
+    /// Изменить статус активности
+    /// </summary>
+    /// <param name="activityId"></param>
+    /// <param name="newStatusId"></param>
+    /// <returns></returns>
     public async Task<bool> ChangeStatus(int activityId, int newStatusId)
     {
         var activity = await context.Activities.FindAsync(activityId);

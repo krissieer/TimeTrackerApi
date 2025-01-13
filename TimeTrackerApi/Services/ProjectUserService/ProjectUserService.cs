@@ -21,10 +21,10 @@ public class ProjectUserService: IProjectUserService
     /// <returns></returns>
     public async Task<ProjectUser> AddProjectUser(int userId, string projectId)
     {
-        Task<bool> flag1 = CheckProjectIdExistence(projectId);
+        Task<bool> flag1 = CheckProjectIdExistence(projectId); // проверка, что такой проект существует
         bool isExistInProjects = await flag1;
 
-        Task<bool> flag2 = CheckProjectUser(userId, projectId);
+        Task<bool> flag2 = CheckProjectUser(userId, projectId);  // проверка, что у пользователя нет такого проекта
         bool isExistInProjectUsers = await flag2;
 
         if (isExistInProjects && !isExistInProjectUsers)

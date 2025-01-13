@@ -12,6 +12,12 @@ public class ProjectService: IProjectService
         this.context = context;
     }
 
+    /// <summary>
+    /// Добавить проект
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="name"></param>
+    /// <returns></returns>
     public async Task<Project> AddProject(string id, string name)
     {
         Task<bool> flag = CheckProjectIdExistence(id);
@@ -30,11 +36,22 @@ public class ProjectService: IProjectService
         else return null;
     }
 
+    /// <summary>
+    /// Проверка на сущетсование проекта
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<bool> CheckProjectIdExistence(string id)
     {
         return await context.Projects.AnyAsync(p => p.Id == id);
     }
 
+    /// <summary>
+    /// Обновить название проекта
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="newName"></param>
+    /// <returns></returns>
     public async Task<Project> UpdateProject(string id, string newName)
     {
         var project = await context.Projects.FirstOrDefaultAsync(a => a.Id == id);
@@ -45,6 +62,11 @@ public class ProjectService: IProjectService
         return project;
     }
 
+    /// <summary>
+    /// Удалить проект
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<bool> DeleteProject(string id)
     {
         var project = await context.Projects.FirstOrDefaultAsync(a => a.Id == id);
@@ -54,6 +76,11 @@ public class ProjectService: IProjectService
         return await context.SaveChangesAsync() >= 1;
     }
 
+    /// <summary>
+    /// Получить название проекта по его ID
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     public async Task<string> GetProjectNameById(string id)
     {
         var project = await context.Projects.FirstOrDefaultAsync(a => a.Id == id);

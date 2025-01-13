@@ -13,7 +13,6 @@ public class UserController : ControllerBase
 
     public UserController(IUserService _userService)
     {
-        Console.WriteLine("UserController initialized");
         userService = _userService;
     }
 
