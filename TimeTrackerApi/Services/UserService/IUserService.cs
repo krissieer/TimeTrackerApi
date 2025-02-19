@@ -10,9 +10,9 @@ public interface IUserService
 
     Task<List<User>> GetUsers();
 
-    Task<User> GetUserById(int userId);
+    //Task<User> GetUserById(int userId);
 
-    Task<User> GetUserByChatId(long chatId);
+    //Task<User> GetUserByChatId(long chatId);
 
     Task<bool> CheckUserNameExistence(string name);
 

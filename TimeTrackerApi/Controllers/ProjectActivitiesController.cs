@@ -16,7 +16,27 @@ public class ProjectActivitiesController : ControllerBase
         projectActivityService = _projectActivityService;
     }
 
-    [HttpPost("add")]
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> GetActivities(string projectId)
+    {
+        var activities = await projectActivityService.GetActivitiesByProjectId(projectId);
+        if (activities.Count == 0)
+            return NotFound("Records not found");
+        return Ok(activities);
+    }
+
+    //[HttpGet("projects/{activityId}")]
+    //[Authorize]
+    //public async Task<IActionResult> GetProjectsByActivityId(int activityId)
+    //{
+    //    var projects = await projectActivityService.GetProjectsByActivityId(activityId);
+    //    if (projects.Count == 0)
+    //        return NotFound("Records not found");
+    //    return Ok(projects);
+    //}
+
+    [HttpPost]
     [Authorize]
     public async Task<IActionResult> AddProjectActivity(int activityId, string projectId)
     {
@@ -26,7 +46,7 @@ public class ProjectActivitiesController : ControllerBase
         return Ok(result);
     }
 
-    [HttpDelete("delete")]
+    [HttpDelete]
     [Authorize]
     public async Task<IActionResult> DeleteProjectActivity(int activityId, string projectId)
     {
@@ -34,26 +54,5 @@ public class ProjectActivitiesController : ControllerBase
         if (!result)
             return NotFound("Record not found");
         return Ok(result);
-    }
-
-    [HttpGet("activities/{projectId}")]
-    [Authorize]
-    public async Task<IActionResult> GetActivitiesByProjectId(string projectId)
-    {
-        var activities = await projectActivityService.GetActivitiesByProjectId(projectId);
-        if (activities.Count == 0)
-            return NotFound("Records not found");
-            //return Ok(new List<Activity>());???
-        return Ok(activities);
-    }
-
-    [HttpGet("projects/{activityId}")]
-    [Authorize]
-    public async Task<IActionResult> GetProjectsByActivityId(int activityId)
-    {
-        var projects = await projectActivityService.GetProjectsByActivityId(activityId);
-        if (projects.Count == 0)
-            return NotFound("Records not found");
-        return Ok(projects);
     }
 }

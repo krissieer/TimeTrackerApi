@@ -17,7 +17,19 @@ namespace TimeTrackerApi.Controllers
             projectService = _projectService;
         }
 
-        [HttpPost("add/{id}/{name}")]
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetProjects()
+        {
+            var projects = await projectService.GetProjects();
+
+            if (projects is null)
+                return NotFound("Projects not found.");
+
+            return Ok(projects);
+        }
+
+        [HttpPost]
         [Authorize]
         public async Task<IActionResult> AddProject(string id, string name)
         {
@@ -29,7 +41,7 @@ namespace TimeTrackerApi.Controllers
             return Ok(project);
         }
 
-        [HttpPut("update/{id}")]
+        [HttpPut]
         [Authorize]
         public async Task<IActionResult> UpdateProject(string id, string newName)
         {
@@ -42,7 +54,7 @@ namespace TimeTrackerApi.Controllers
             return Ok(project);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete]
         [Authorize]
         public async Task<IActionResult> DeleteProject(string id)
         {
@@ -52,17 +64,6 @@ namespace TimeTrackerApi.Controllers
                 return NotFound("Project not found.");
             }
             return NoContent();
-        }
-
-        [HttpGet("{id}")]
-        [Authorize]
-        public async Task<IActionResult> GetProjectNameById(string id)
-        {
-            var projectName = await projectService.GetProjectNameById(id);
-            if (string.IsNullOrEmpty(projectName))
-                return NotFound("Project not found.");
-
-            return Ok(projectName);
         }
     }
 }

@@ -17,7 +17,35 @@ public class ProjectUsersController : ControllerBase
         projectUserService = _projectUserService;
     }
 
-    [HttpPost("add/{userId}/{projectId}")]
+    //[HttpGet("projects/{userId}")]
+    //[Authorize]
+    //public async Task<IActionResult> GetProjectsByUserId(int userId)
+    //{
+    //    var projects = await projectUserService.GetProjectsByUserId(userId);
+    //    if (projects.Count == 0)
+    //        return NotFound("Records not found");
+    //    return Ok(projects);
+    //}
+
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> GetUsersByProjectId(string projectId)
+    {
+        var users = await projectUserService.GetUsersByProjectId(projectId);
+        if (users.Count == 0)
+            return NotFound("Records not found");
+        return Ok(users);
+    }
+
+    [HttpGet("{projectId}/{userId}/role")]
+    [Authorize]
+    public async Task<IActionResult> GetIsCreator(int userId, string projectId)
+    {
+        var result = await projectUserService.IsCreator(userId, projectId);
+        return Ok(result);
+    }
+
+    [HttpPost]
     [Authorize]
     public async Task<IActionResult> AddProjectUser(int userId, string projectId, bool isCreator)
     {
@@ -29,7 +57,7 @@ public class ProjectUsersController : ControllerBase
         return Ok(result);
     }
 
-    [HttpDelete("delete/{userId}/{projectId}")]
+    [HttpDelete]
     [Authorize]
     public async Task<IActionResult> DeleteProjectUser(int userId, string projectId)
     {
@@ -39,33 +67,5 @@ public class ProjectUsersController : ControllerBase
             return NotFound("Record not found.");
         }
         return NoContent();
-    }
-
-    [HttpGet("users/{projectId}")]
-    [Authorize]
-    public async Task<IActionResult> GetUsersByProjectId(string projectId)
-    {
-        var users = await projectUserService.GetUsersByProjectId(projectId);
-        if (users.Count == 0)
-            return NotFound("Records not found");
-        return Ok(users);
-    }
-
-    [HttpGet("projects/{userId}")]
-    [Authorize]
-    public async Task<IActionResult> GetProjectsByUserId(int userId)
-    {
-        var projects = await projectUserService.GetProjectsByUserId(userId);
-        if (projects.Count == 0)
-            return NotFound("Records not found");
-        return Ok(projects);
-    }
-
-    [HttpGet("projects/{userId}/{projectId}")]
-    [Authorize]
-    public async Task<IActionResult> GetIsCreator(int userId, string projectId)
-    {
-        var result = await projectUserService.IsCreator(userId, projectId);
-        return Ok(result);
     }
 }

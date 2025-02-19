@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using TimeTrackerApi.Models;
 using TimeTrackerApi.Services.ActivityService;
+using TimeTrackerApi.Services.ProjectActivityService;
 
 namespace TimeTrackerApi.Controllers;
 
@@ -12,10 +13,12 @@ namespace TimeTrackerApi.Controllers;
 public class ActivitiesController : ControllerBase
 {
     private readonly IActivityService activityService;
+    private readonly IProjectActivityService projectActivityService;
 
-    public ActivitiesController(IActivityService _activityService)
+    public ActivitiesController(IActivityService _activityService, IProjectActivityService _projectActivityService)
     {
         activityService = _activityService;
+        projectActivityService = _projectActivityService;
     }
 
     //[HttpGet]
@@ -44,7 +47,6 @@ public class ActivitiesController : ControllerBase
     //}
 
 
-
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> GetStatusAsync(int activityId)
@@ -53,6 +55,16 @@ public class ActivitiesController : ControllerBase
         if (status == 0)
             return NotFound("Records not found");
         return Ok(status);
+    }
+
+    [HttpGet("{activityId}/projects")]
+    [Authorize]
+    public async Task<IActionResult> GetProjectsByActivityId(int activityId)
+    {
+        var projects = await projectActivityService.GetProjectsByActivityId(activityId);
+        if (projects.Count == 0)
+            return NotFound("Records not found");
+        return Ok(projects);
     }
 
     [HttpPost]

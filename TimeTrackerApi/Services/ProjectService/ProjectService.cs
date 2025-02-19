@@ -81,11 +81,11 @@ public class ProjectService: IProjectService
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    public async Task<string> GetProjectNameById(string id)
+    public async Task<List<Project>> GetProjects()
     {
-        var project = await context.Projects.FirstOrDefaultAsync(a => a.Id == id);
-        if (project == null)
+        var projects = await context.Projects.ToListAsync();
+        if (projects == null)
             return null;
-        return project.Name;
+        return projects;
     }
 }

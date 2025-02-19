@@ -27,20 +27,20 @@ public class UserService:IUserService
     /// </summary>
     /// <param name="userId"></param>
     /// <returns></returns>
-    public async Task<User> GetUserById(int userId)
-    {
-        return await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-    }
+    //public async Task<User> GetUserById(int userId)
+    //{
+    //    return await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+    //}
 
-    /// <summary>
-    /// Получить пользователя по chatID
-    /// </summary>
-    /// <param name="chatId"></param>
-    /// <returns></returns>
-    public async Task<User> GetUserByChatId(long chatId)
-    {
-        return await context.Users.FirstOrDefaultAsync(u => u.ChatId == chatId);
-    }
+    ///// <summary>
+    ///// Получить пользователя по chatID
+    ///// </summary>
+    ///// <param name="chatId"></param>
+    ///// <returns></returns>
+    //public async Task<User> GetUserByChatId(long chatId)
+    //{
+    //    return await context.Users.FirstOrDefaultAsync(u => u.ChatId == chatId);
+    //}
 
     /// <summary>
     /// Проверка имени на существование
