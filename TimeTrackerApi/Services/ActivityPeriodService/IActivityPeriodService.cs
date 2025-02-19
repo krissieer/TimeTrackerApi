@@ -8,7 +8,7 @@ namespace TimeTrackerApi.Services.ActivityPeriodService
 
         Task<ActivityPeriod> UpdateActivityPeriod(int activityPeriodId, DateTime? data1 = null, DateTime? date2 = null);
 
-        Task<int> StartTracking(int activityId);
+        Task<ActivityPeriod> StartTracking(int activityId);
         
         Task<ActivityPeriod> SetStopTime(int activityId);
        

@@ -8,7 +8,7 @@ namespace TimeTrackerApi.Services.ActivityService
        
         Task<bool> AddDefaultActivities(int userId);
 
-        Task<Activity> AddActivity(int userId, string name);
+        Task<bool> AddActivity(int userId, string name);
 
         Task<bool> CheckActivityNameExistence(int userId, string name);
 
@@ -18,9 +18,9 @@ namespace TimeTrackerApi.Services.ActivityService
 
         Task<int> GetStatusById(int activityId);
 
-        Task<bool> PutActivityInArchive(int activityId);
+        //Task<bool> PutActivityInArchive(int activityId);
 
-        Task<bool> RecoverActivity(int activityId);
+        //Task<bool> RecoverActivity(int activityId);
 
         Task<bool> ChangeStatus(int activityId, int newStatusId);
     }

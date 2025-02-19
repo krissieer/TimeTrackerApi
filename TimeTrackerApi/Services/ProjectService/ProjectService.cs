@@ -13,7 +13,7 @@ public class ProjectService: IProjectService
     }
 
     /// <summary>
-    /// Добавить проект
+    /// Добавить проект - Создание проекта
     /// </summary>
     /// <param name="id"></param>
     /// <param name="name"></param>

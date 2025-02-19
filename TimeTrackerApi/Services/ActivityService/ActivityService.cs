@@ -73,10 +73,10 @@ public class ActivityService: IActivityService
     /// <param name="userId"></param>
     /// <param name="name"></param>
     /// <returns></returns>
-    public async Task<Activity> AddActivity(int userId, string name)
+    public async Task<bool> AddActivity(int userId, string name)
     {
         if (await CheckActivityNameExistence(userId, name))
-            return null;
+            return false;
         else
         {
             var activity = new Activity
@@ -87,8 +87,7 @@ public class ActivityService: IActivityService
                 StatusId = 1
             };
             await context.Activities.AddAsync(activity);
-            await context.SaveChangesAsync();
-            return activity;
+            return await context.SaveChangesAsync() >= 1;
         }
     }
 
@@ -162,33 +161,33 @@ public class ActivityService: IActivityService
         return activity.StatusId;
     }
 
-    /// <summary>
-    /// Отправить активность в архив
-    /// </summary>
-    /// <param name="activityId"></param>
-    /// <returns></returns>
-    public async Task<bool> PutActivityInArchive(int activityId)
-    {
-        var activity = await context.Activities.FindAsync(activityId);
-        if (activity is null)
-            return false;
-        activity.StatusId = 3;
-        return await context.SaveChangesAsync() >= 1;
-    }
+    ///// <summary>
+    ///// Отправить активность в архив
+    ///// </summary>
+    ///// <param name="activityId"></param>
+    ///// <returns></returns>
+    //public async Task<bool> PutActivityInArchive(int activityId)
+    //{
+    //    var activity = await context.Activities.FindAsync(activityId);
+    //    if (activity is null)
+    //        return false;
+    //    activity.StatusId = 3;
+    //    return await context.SaveChangesAsync() >= 1;
+    //}
 
-    /// <summary>
-    /// Восстановить активность из архива
-    /// </summary>
-    /// <param name="activityId"></param>
-    /// <returns></returns>
-    public async Task<bool> RecoverActivity(int activityId)
-    {
-        var activity = await context.Activities.FindAsync(activityId);
-        if (activity is null)
-            return false;
-        activity.StatusId = 1;
-        return await context.SaveChangesAsync() >=1;
-    }
+    ///// <summary>
+    ///// Восстановить активность из архива
+    ///// </summary>
+    ///// <param name="activityId"></param>
+    ///// <returns></returns>
+    //public async Task<bool> RecoverActivity(int activityId)
+    //{
+    //    var activity = await context.Activities.FindAsync(activityId);
+    //    if (activity is null)
+    //        return false;
+    //    activity.StatusId = 1;
+    //    return await context.SaveChangesAsync() >=1;
+    //}
 
     /// <summary>
     /// Изменить статус активности

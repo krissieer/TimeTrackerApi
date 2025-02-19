@@ -19,7 +19,7 @@ public class ProjectUserService: IProjectUserService
     /// <param name="userId"></param>
     /// <param name="projectId"></param>
     /// <returns></returns>
-    public async Task<ProjectUser> AddProjectUser(int userId, string projectId)
+    public async Task<ProjectUser> AddProjectUser(int userId, string projectId, bool isCreator)
     {
         Task<bool> flag1 = CheckProjectIdExistence(projectId); // проверка, что такой проект существует
         bool isExistInProjects = await flag1;
@@ -33,6 +33,7 @@ public class ProjectUserService: IProjectUserService
             {
                 UserId = userId,
                 ProjectId = projectId,
+                Creator = isCreator,
             };
             await context.ProjectUsers.AddAsync(projectUser);
             await context.SaveChangesAsync();
@@ -99,5 +100,19 @@ public class ProjectUserService: IProjectUserService
         var query = context.ProjectUsers.AsQueryable();
         query = query.Where(a => a.ProjectId == projectId);
         return await query.ToListAsync();
+    }
+
+    /// <summary>
+    /// Проверить, является ли пользователь создателем проекта
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="projectId"></param>
+    /// <returns></returns>
+    public async Task<bool> IsCreator(int userId, string projectId)
+    {
+        return await context.ProjectUsers
+            .Where(p => p.ProjectId == projectId && p.UserId == userId)
+            .Select(a => a.Creator)
+            .SingleOrDefaultAsync();
     }
 }

@@ -8,11 +8,11 @@ namespace TimeTrackerApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProjectController : ControllerBase
+    public class ProjectsController : ControllerBase
     {
         private readonly IProjectService projectService;
 
-        public ProjectController(IProjectService _projectService)
+        public ProjectsController(IProjectService _projectService)
         {
             projectService = _projectService;
         }

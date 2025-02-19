@@ -10,11 +10,5 @@ namespace TimeTrackerApi.Models
 
         public Project Project { get; set; }
         public Activity Activity { get; set; }
-
-        //public ProjectActivity(int activityid, int projectid)
-        //{
-        //    ActivityId = activityid;
-        //    ProjectId = projectid;
-        //}
     }
 }

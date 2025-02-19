@@ -13,8 +13,8 @@ public class TokenGeneration
                 issuer: AuthOptions.ISSUER,
                 audience: AuthOptions.AUDIENCE,
                 claims: claims,
-                expires: DateTime.UtcNow.Add(TimeSpan.FromDays(2)),
+                expires: DateTime.UtcNow.Add(TimeSpan.FromDays(5)),
                 signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
-        return new JwtSecurityTokenHandler().WriteToken(jwt); ;
+        return new JwtSecurityTokenHandler().WriteToken(jwt); 
     }
 }

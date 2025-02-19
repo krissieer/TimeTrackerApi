@@ -4,7 +4,7 @@ namespace TimeTrackerApi.Services.ProjectUserService
 {
     public interface IProjectUserService
     {
-        Task<ProjectUser> AddProjectUser(int userId, string projectId);
+        Task<ProjectUser> AddProjectUser(int userId, string projectId, bool isCreator);
 
         Task<bool> CheckProjectIdExistence(string id);
 
@@ -15,5 +15,7 @@ namespace TimeTrackerApi.Services.ProjectUserService
         Task<List<ProjectUser>> GetProjectsByUserId(int userId);
 
         Task<List<ProjectUser>> GetUsersByProjectId(string projectId);
+
+        Task<bool> IsCreator(int userId, string projectId);
     }
 }

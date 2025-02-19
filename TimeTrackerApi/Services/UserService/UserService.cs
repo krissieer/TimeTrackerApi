@@ -12,15 +12,15 @@ public class UserService:IUserService
         this.context = context;
     }
 
-    /// <summary>
-    /// Получить количество пользователей
-    /// </summary>
-    /// <returns></returns>
-    public async Task<int> GetUsersNumber()
-    {
-        var users = await context.Users.ToListAsync();
-        return users.Count;
-    }
+    ///// <summary>
+    ///// Получить количество пользователей
+    ///// </summary>
+    ///// <returns></returns>
+    //public async Task<int> GetUsersNumber()
+    //{
+    //    var users = await context.Users.ToListAsync();
+    //    return users.Count;
+    //}
 
     /// <summary>
     /// Получить пользователя по его UserID
@@ -50,6 +50,11 @@ public class UserService:IUserService
     public async Task<bool> CheckUserNameExistence(string name)
     {
         return await context.Users.AnyAsync(u => u.Name.Equals(name));
+    }
+
+    public async Task<List<User>> GetUsers()
+    {
+        return await context.Users.ToListAsync();
     }
 
     /// <summary>

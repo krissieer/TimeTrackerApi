@@ -4,14 +4,9 @@
     {
         public string Id { get; set; }
         public string Name { get; set; }
+        //public int CreatorId { get; set; } //id пользователя - создателя проекта
 
         public ICollection<ProjectActivity> ProjectActivities { get; set; }
         public ICollection<ProjectUser> ProjectUsers { get; set; }
-
-        //public Project(string id, string name)
-        //{
-        //    Id = id;
-        //    Name = name;
-        //}
     }
 }

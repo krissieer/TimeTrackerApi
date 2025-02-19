@@ -82,25 +82,42 @@ public class ActivityPeriodService: IActivityPeriodService
     /// </summary>
     /// <param name="activityId"></param>
     /// <returns></returns>
-    public async Task<int> StartTracking(int activityId)
+    //public async Task<int> StartTracking(int activityId)
+    //{
+    //    var result = await AddActivityPeriod(activityId);
+    //    if (result is null)
+    //        return 0;
+    //    var activity = await context.Activities.FindAsync(activityId);
+    //    if (activity is null)
+    //    {
+    //        Console.WriteLine("Активность пустая");
+    //        return 0;
+    //    }
+    //    if (activity.StatusId == 2)
+    //    {
+    //        Console.WriteLine("Активность уже запущена");
+    //        return -1;
+    //    }
+    //    activity.StatusId = 2;
+    //    await context.SaveChangesAsync();
+    //    return 1;
+    //}
+
+    public async Task<ActivityPeriod> StartTracking(int activityId)
     {
         var result = await AddActivityPeriod(activityId);
         if (result is null)
-            return 0;
+            return null;
         var activity = await context.Activities.FindAsync(activityId);
-        if (activity is null)
-        {
-            Console.WriteLine("Активность пустая");
-            return 0;
-        }
-        if (activity.StatusId == 2)
+
+        if (activity is not null && activity.StatusId == 2)
         {
             Console.WriteLine("Активность уже запущена");
-            return -1;
+            return null;
         }
         activity.StatusId = 2;
         await context.SaveChangesAsync();
-        return 1;
+        return result;
     }
 
     /// <summary>
@@ -210,4 +227,8 @@ public class ActivityPeriodService: IActivityPeriodService
         var totalSeconds = await query.SumAsync(a => (long?)a.TotalSeconds) ?? 0;
         return TimeSpan.FromSeconds(totalSeconds);
     }
+    // Запустить GetStatistic в цикле (по каждой необходимой активности - по дефолту все активности пользователя (получить список активностей))
+    // Для того чтобы получить статистику за определенные проекты - получить активности,
+    //  которые учпствуют в этих проектах + эти активности принадлежат текущему пользователю, и запустить GetStatistic для этого списка активностей
+
 }

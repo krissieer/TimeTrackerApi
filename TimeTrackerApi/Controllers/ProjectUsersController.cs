@@ -8,20 +8,20 @@ namespace TimeTrackerApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class ProjectUserController : ControllerBase
+public class ProjectUsersController : ControllerBase
 {
     private readonly IProjectUserService projectUserService;
 
-    public ProjectUserController(IProjectUserService _projectUserService)
+    public ProjectUsersController(IProjectUserService _projectUserService)
     {
         projectUserService = _projectUserService;
     }
 
     [HttpPost("add/{userId}/{projectId}")]
     [Authorize]
-    public async Task<IActionResult> AddProjectUser(int userId, string projectId)
+    public async Task<IActionResult> AddProjectUser(int userId, string projectId, bool isCreator)
     {
-        var result = await projectUserService.AddProjectUser(userId,projectId);
+        var result = await projectUserService.AddProjectUser(userId,projectId,isCreator);
         if (result == null)
         {
             return BadRequest("Project does not exist or the user is already assigned to this project.");
@@ -59,5 +59,13 @@ public class ProjectUserController : ControllerBase
         if (projects.Count == 0)
             return NotFound("Records not found");
         return Ok(projects);
+    }
+
+    [HttpGet("projects/{userId}/{projectId}")]
+    [Authorize]
+    public async Task<IActionResult> GetIsCreator(int userId, string projectId)
+    {
+        var result = await projectUserService.IsCreator(userId, projectId);
+        return Ok(result);
     }
 }

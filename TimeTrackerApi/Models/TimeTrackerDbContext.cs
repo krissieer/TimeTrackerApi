@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authorization.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace TimeTrackerApi.Models;
@@ -117,6 +118,7 @@ public class TimeTrackerDbContext : DbContext
             entity.HasMany(e => e.ProjectActivities)
                   .WithOne(a => a.Project)
                   .HasForeignKey(e => e.ProjectId);
+
         });
 
         modelBuilder.Entity<ProjectUser>(entity =>
@@ -125,6 +127,7 @@ public class TimeTrackerDbContext : DbContext
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
             entity.Property(e => e.UserId);
             entity.Property(e => e.ProjectId);
+            entity.Property(e => e.Creator);
 
             entity.HasOne(e => e.Project)
                   .WithMany(a => a.ProjectUsers)

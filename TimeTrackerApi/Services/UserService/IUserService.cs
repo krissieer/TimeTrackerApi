@@ -6,7 +6,9 @@ public interface IUserService
 {
     //Task<List<User>> GetUsersAsync();
 
-    Task<int> GetUsersNumber();
+    //Task<int> GetUsersNumber();
+
+    Task<List<User>> GetUsers();
 
     Task<User> GetUserById(int userId);
 

@@ -7,11 +7,11 @@ namespace TimeTrackerApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class ProjectActivityController : ControllerBase
+public class ProjectActivitiesController : ControllerBase
 {
     private readonly IProjectActivityService projectActivityService;
 
-    public ProjectActivityController(IProjectActivityService _projectActivityService)
+    public ProjectActivitiesController(IProjectActivityService _projectActivityService)
     {
         projectActivityService = _projectActivityService;
     }
