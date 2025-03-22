@@ -59,9 +59,11 @@ public class ProjectActivityService: IProjectActivityService
     /// <returns></returns>
     public async Task<bool> DeleteProjectActivity(int activityId, string projectId)
     {
-        var projectActivity = await context.ProjectActivities.FirstOrDefaultAsync(a => a.ActivityId == activityId && a.ProjectId == projectId);
-        if (projectActivity == null) 
-            return false;
+        var projectActivity = await context.ProjectActivities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.ActivityId == activityId && a.ProjectId == projectId);
+        if (projectActivity == null)
+            throw new KeyNotFoundException($"Activity with ID {activityId} not found in project with ID {projectId}.");
         context.ProjectActivities.Remove(projectActivity);
         return await context.SaveChangesAsync() >= 1;
     }

@@ -61,24 +61,24 @@ namespace TimeTrackerApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ActivityId")
+                    b.Property<int>("ActId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("StartTime")
+                    b.Property<DateTime>("Starttime")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<DateTime>("StopTime")
+                    b.Property<DateTime?>("Stoptime")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<long>("TotalSeconds")
+                    b.Property<long?>("Totalseconds")
                         .HasColumnType("bigint");
 
-                    b.Property<TimeSpan>("TotalTime")
+                    b.Property<TimeSpan?>("Totaltime")
                         .HasColumnType("interval");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ActivityId");
+                    b.HasIndex("ActId");
 
                     b.ToTable("ActivityPeriods");
                 });
@@ -105,7 +105,7 @@ namespace TimeTrackerApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ActivityId")
+                    b.Property<int>("ActId")
                         .HasColumnType("integer");
 
                     b.Property<string>("ProjectId")
@@ -114,7 +114,7 @@ namespace TimeTrackerApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ActivityId");
+                    b.HasIndex("ActId");
 
                     b.HasIndex("ProjectId");
 
@@ -237,7 +237,7 @@ namespace TimeTrackerApi.Migrations
                 {
                     b.HasOne("TimeTrackerApi.Models.Activity", "Activity")
                         .WithMany("ActivityPeriods")
-                        .HasForeignKey("ActivityId")
+                        .HasForeignKey("ActId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -248,7 +248,7 @@ namespace TimeTrackerApi.Migrations
                 {
                     b.HasOne("TimeTrackerApi.Models.Activity", "Activity")
                         .WithMany("ProjectActivities")
-                        .HasForeignKey("ActivityId")
+                        .HasForeignKey("ActId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

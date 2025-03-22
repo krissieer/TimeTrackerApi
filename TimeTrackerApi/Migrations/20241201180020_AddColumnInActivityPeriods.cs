@@ -11,7 +11,7 @@ namespace TimeTrackerApi.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<long>(
-                name: "TotalSeconds",
+                name: "Totalseconds",
                 table: "ActivityPeriods",
                 type: "bigint",
                 nullable: false,
@@ -22,7 +22,7 @@ namespace TimeTrackerApi.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "TotalSeconds",
+                name: "Totalseconds",
                 table: "ActivityPeriods");
         }
     }

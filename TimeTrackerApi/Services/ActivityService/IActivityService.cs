@@ -5,7 +5,9 @@ namespace TimeTrackerApi.Services.ActivityService
     public interface IActivityService
     {
         Task<List<Activity>> GetActivities(int userId, bool activeOnly = true, bool archivedOnly = false);
-       
+
+        Task<Activity?> GetActivityById(int activityId);
+
         Task<bool> AddDefaultActivities(int userId);
 
         Task<bool> AddActivity(int userId, string name);

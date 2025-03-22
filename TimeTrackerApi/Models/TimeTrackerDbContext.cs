@@ -31,8 +31,15 @@ public class TimeTrackerDbContext : DbContext
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
+
             IConfiguration configuration = builder.Build();
             var connectionString = configuration["DbConnectionString"];
+
+            //var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+            //if (string.IsNullOrEmpty(connectionString))
+            //{
+            //    throw new InvalidOperationException("DbConnectionString is not set.");
+            //}
             Console.WriteLine($"Trying to connect to DB with connection string: {connectionString}");
             optionsBuilder.UseNpgsql(connectionString);
         }
@@ -83,10 +90,10 @@ public class TimeTrackerDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
             entity.Property(e => e.StartTime).IsRequired().HasColumnType("timestamp without time zone");
-            entity.Property(e => e.StopTime).HasColumnType("timestamp without time zone");
+            entity.Property(e => e.StopTime).HasColumnType("timestamp without time zone").IsRequired(false);
             entity.Property(e => e.ActivityId).IsRequired();
-            entity.Property(e => e.TotalTime);
-            entity.Property(e => e.TotalSeconds);
+            entity.Property(e => e.TotalTime).IsRequired(false);
+            entity.Property(e => e.TotalSeconds).IsRequired(false);
 
             entity.HasOne(e => e.Activity)
                 .WithMany(a => a.ActivityPeriods)

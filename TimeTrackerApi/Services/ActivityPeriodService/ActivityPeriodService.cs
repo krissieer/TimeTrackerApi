@@ -15,6 +15,13 @@ public class ActivityPeriodService: IActivityPeriodService
         this.context = context;
     }
 
+    public async Task<ActivityPeriod?> GetActivityPeriodById(int activityPeriodId)
+    {
+        return await context.ActivityPeriods
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == activityPeriodId);
+    }
+
     /// <summary>
     /// Добавить запись об отслеживании в БД
     /// </summary>
@@ -66,11 +73,12 @@ public class ActivityPeriodService: IActivityPeriodService
         }
 
         DateTime startTime = activityPeriod.StartTime;
-        DateTime stopTime = activityPeriod.StopTime;
+        DateTime? stopTime = activityPeriod.StopTime;
 
-        TimeSpan result = stopTime - startTime;
+        TimeSpan? result = stopTime - startTime;
         activityPeriod.TotalTime = result;
-        activityPeriod.TotalSeconds = (long)result.TotalSeconds;
+        long? sec = ((TimeSpan)result).TotalSeconds as long?;
+        activityPeriod.TotalSeconds = sec;
 
         await context.SaveChangesAsync();
 

@@ -12,7 +12,7 @@ namespace TimeTrackerApi.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<DateTime>(
-                name: "StopTime",
+                name: "Stoptime",
                 table: "ActivityPeriods",
                 type: "timestamp",
                 nullable: false,
@@ -20,7 +20,7 @@ namespace TimeTrackerApi.Migrations
                 oldType: "timestamp with time zone");
 
             migrationBuilder.AlterColumn<DateTime>(
-                name: "StartTime",
+                name: "Starttime",
                 table: "ActivityPeriods",
                 type: "timestamp",
                 nullable: false,
@@ -40,7 +40,7 @@ namespace TimeTrackerApi.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<DateTime>(
-                name: "StopTime",
+                name: "Stoptime",
                 table: "ActivityPeriods",
                 type: "timestamp with time zone",
                 nullable: false,
@@ -48,7 +48,7 @@ namespace TimeTrackerApi.Migrations
                 oldType: "timestamp");
 
             migrationBuilder.AlterColumn<DateTime>(
-                name: "StartTime",
+                name: "Starttime",
                 table: "ActivityPeriods",
                 type: "timestamp with time zone",
                 nullable: false,

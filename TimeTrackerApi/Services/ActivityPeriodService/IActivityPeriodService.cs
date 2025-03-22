@@ -4,6 +4,8 @@ namespace TimeTrackerApi.Services.ActivityPeriodService
 {
     public interface IActivityPeriodService
     {
+        Task<ActivityPeriod?> GetActivityPeriodById(int activityPeriodId);
+
         Task<ActivityPeriod> AddActivityPeriod(int activityId);
 
         Task<ActivityPeriod> UpdateActivityPeriod(int activityPeriodId, DateTime? data1 = null, DateTime? date2 = null);

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using TimeTrackerApi.Services.ActivityPeriodService;
 using TimeTrackerApi.Models;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using TimeTrackerApi.Services.ActivityService;
+using System;
 
 namespace TimeTrackerApi.Controllers;
 
@@ -11,50 +13,93 @@ namespace TimeTrackerApi.Controllers;
 public class ActivityPeriodsController : ControllerBase
 {
     private readonly IActivityPeriodService activityPeriodService;
+    private readonly IActivityService activityService;
 
-    public ActivityPeriodsController(IActivityPeriodService _userService)
+    public ActivityPeriodsController(IActivityPeriodService _userService,  IActivityService _activityService)
     {
         activityPeriodService = _userService;
+        activityService = _activityService;
     }
 
+    /// <summary>
+    /// Получить статистику активности
+    /// </summary>
+    /// <param name="activityId"></param>
+    /// <param name="data1"></param>
+    /// <param name="data2"></param>
+    /// <returns></returns>
     [HttpGet]
     [Authorize]
     public async Task<ActionResult<TimeSpan>> GetStatisticAsync(int activityId, DateTime? data1 = null, DateTime? data2 = null)
     {
-        TimeSpan statistic = TimeSpan.Zero;
+        var activityExists = await activityService.GetActivityById(activityId);
+        if (activityExists == null)
+        {
+            return NotFound($"Activity with ID {activityId} not found.");
+        }
 
-        if (data1.HasValue & data2.HasValue) // промежуток времени
+        TimeSpan? statistic = null;
+
+        if (data1.HasValue && data2.HasValue) // промежуток времени
             statistic = await activityPeriodService.GetStatistic(activityId, data1, data2);
 
         // определенный день
-        else if (data1.HasValue & !data2.HasValue)
+        else if (data1.HasValue && !data2.HasValue)
             statistic = await activityPeriodService.GetStatistic(activityId, data1);
-        else if (!data1.HasValue & data2.HasValue)
+        else if (!data1.HasValue && data2.HasValue)
             statistic = await activityPeriodService.GetStatistic(activityId, data2);
 
         else
-            statistic = await activityPeriodService.GetStatistic(activityId); //вест период
+            statistic = await activityPeriodService.GetStatistic(activityId); //весь период
 
-        if (statistic == TimeSpan.Zero)
-            return BadRequest("Records not found");
+        if (statistic is null)
+            return NotFound("No statistics found for the given period");
         return Ok(statistic);
     }
 
-
+    /// <summary>
+    /// Добавить данные об отслеживании активности
+    /// </summary>
+    /// <param name="activityId"></param>
+    /// <param name="isStarted"></param>
+    /// <returns></returns>
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> StartStopTracking(int activityId, bool start)
+    public async Task<ActionResult<ActivityPeriod>> StartStopTracking([FromBody] StartStopTrackingDto dto)
     {
-        ActivityPeriod result;
-        if (start)
-            result = await activityPeriodService.StartTracking(activityId);
-        else
-            result = await activityPeriodService.StopTracking(activityId);
+        var activityExists = await activityService.GetActivityById(dto.ActivityId);
+        if (activityExists == null)
+        {
+            return NotFound($"Activity with ID {dto.ActivityId} not found.");
+        }
+        TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
-        if (result is null)
-            return BadRequest("Failed to start/stop tracking.");
+        var actPeriod = dto.IsStarted
+           ? await activityPeriodService.StartTracking(dto.ActivityId)
+           : await activityPeriodService.StopTracking(dto.ActivityId);
 
-        return Ok(result);
+        if (actPeriod is null)
+        {
+            return BadRequest(dto.IsStarted ? "Failed to start tracking." : "Failed to stop tracking.");
+        }
+
+        var response = new ActivityPeriodDto
+        {
+            //actPeriod.Id,
+            //actPeriod.ActivityId,
+            //StartTime = TimeZoneInfo.ConvertTimeFromUtc(actPeriod.StartTime, tz),
+            //StopTime = actPeriod.StopTime.HasValue
+            //    ? TimeZoneInfo.ConvertTimeFromUtc(actPeriod.StopTime.Value, tz)
+            //    : (DateTime?)null
+
+            ActivityPeriodId = actPeriod.Id,
+            ActId = actPeriod.ActivityId,
+            Starttime = TimeZoneInfo.ConvertTimeFromUtc(actPeriod.StartTime, tz),
+            Stoptime = TimeZoneInfo.ConvertTimeFromUtc(actPeriod.StopTime.Value, tz),
+            Totaltime = actPeriod.TotalTime,
+            Totalseconds = actPeriod.TotalSeconds,
+        };
+        return Ok(response);
     }
     //public async Task<IActionResult> StartTracking(int activityId)
     //{
@@ -81,29 +126,78 @@ public class ActivityPeriodsController : ControllerBase
 
     [HttpPut]
     [Authorize]
-    public async Task<ActionResult<bool>> UpdateTimeAsynс(int activityPeriodId, DateTime? newStartTime = null, DateTime? newStopTime = null)
+    public async Task<ActionResult<bool>> UpdateTimeAsynс([FromBody] UpdatePeriod dto)
     {
-        ActivityPeriod result = null;
+        if (!dto.NewStartTime.HasValue && !dto.NewStopTime.HasValue)
+            return BadRequest("At least one of newStartTime or newStopTime must has value.");
 
-        if (newStartTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, newStartTime);
+        var activityPeriod = await activityPeriodService.GetActivityPeriodById(dto.ActivityPeriodId);
+        if (activityPeriod is null)
+            return NotFound($"ActivityPeriod with ID {dto.ActivityPeriodId} not found.");
 
-        if (newStopTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, null, newStopTime);
+        ActivityPeriod? result = null;
+
+        if (dto.NewStartTime.HasValue)
+            result = await activityPeriodService.UpdateActivityPeriod(dto.ActivityPeriodId, dto.NewStartTime);
+
+        if (dto.NewStopTime.HasValue)
+            result = await activityPeriodService.UpdateActivityPeriod(dto.ActivityPeriodId, null, dto.NewStopTime);
 
         if (result is null)
-            return NotFound("Record not found");
+            return BadRequest("Failed to update activity period.");
 
-        return Ok(result);
+        return Ok(new
+        {
+            //result.Id,
+            //result.ActivityId,
+            //result.StartTime,
+            //result.StopTime,
+            //result.TotalTime,
+            //result.TotalSeconds
+
+            ActivityPeriodId = result.Id,
+            ActId = result.ActivityId,
+            Starttime = result.StartTime,
+            Stoptime = result.StopTime,
+            Totaltime = result.TotalTime,
+            Totalseconds = result.TotalSeconds
+        });
     }
 
-    [HttpDelete]
+    [HttpDelete("{activityPeriodId}")]
     [Authorize]
-    public async Task<ActionResult<bool>> DeleteActivityAsync(int activityPeriodId)
+    public async Task<ActionResult> DeleteActivityPeriodAsync(int activityPeriodId)
     {
+        var activityPeriod = await activityPeriodService.GetActivityPeriodById(activityPeriodId);
+        if (activityPeriod is null)
+            return NotFound($"ActivityPeriod with ID {activityPeriodId} not found.");
+
         var result = await activityPeriodService.DeleteActivityPeriod(activityPeriodId);
         if (!result)
-            return BadRequest("Record not found");
-        return Ok(result);
+            return StatusCode(500, "Failed to delete the activity period.");
+        return NoContent();
     }
+}
+
+public class StartStopTrackingDto
+{
+    public int ActivityId { get; set; }
+    public bool IsStarted { get; set; }
+}
+
+public class UpdatePeriod
+{
+    public int ActivityPeriodId { get; set; }
+    public DateTime? NewStartTime { get; set; } = null;
+    public DateTime? NewStopTime { get; set; } = null;
+}
+
+public class ActivityPeriodDto
+{
+    public int ActivityPeriodId { get; set; }
+    public int ActId { get; set; }
+    public DateTime? Starttime { get; set; } = null;
+    public DateTime? Stoptime { get; set; } = null;
+    public TimeSpan? Totaltime { get; set; } = null;
+    public long? Totalseconds { get; set; } = 0;
 }

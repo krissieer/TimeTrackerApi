@@ -12,8 +12,8 @@ using TimeTrackerApi.Models;
 namespace TimeTrackerApi.Migrations
 {
     [DbContext(typeof(TimeTrackerDbContext))]
-    [Migration("20250217091815_AddedProjectCreator")]
-    partial class AddedProjectCreator
+    [Migration("20250321120932_nyllableDateTime")]
+    partial class nyllableDateTime
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -70,13 +70,13 @@ namespace TimeTrackerApi.Migrations
                     b.Property<DateTime>("Starttime")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<DateTime>("Stoptime")
+                    b.Property<DateTime?>("Stoptime")
                         .HasColumnType("timestamp without time zone");
 
-                    b.Property<long>("Totalseconds")
+                    b.Property<long?>("Totalseconds")
                         .HasColumnType("bigint");
 
-                    b.Property<TimeSpan>("Totaltime")
+                    b.Property<TimeSpan?>("Totaltime")
                         .HasColumnType("interval");
 
                     b.HasKey("Id");

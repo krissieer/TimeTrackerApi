@@ -179,12 +179,12 @@ namespace TimeTrackerApi.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_ActivityPeriods_ActivityId",
                 table: "ActivityPeriods",
-                column: "ActivityId");
+                column: "ActId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProjectActivities_ActivityId",
                 table: "ProjectActivities",
-                column: "ActivityId");
+                column: "ActId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProjectActivities_ProjectId",

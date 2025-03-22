@@ -71,9 +71,11 @@ public class ProjectUserService: IProjectUserService
     /// <returns></returns>
     public async Task<bool> DeleteProjectUser(int userId, string projectId)
     {
-        var projectUser = await context.ProjectUsers.FirstOrDefaultAsync(a => a.UserId == userId && a.ProjectId == projectId);
+        var projectUser = await context.ProjectUsers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.UserId == userId && a.ProjectId == projectId);
         if (projectUser == null)
-            return false;
+            throw new KeyNotFoundException($"User with ID {userId} not found in project with ID {projectId}.");
         context.ProjectUsers.Remove(projectUser);
         return await context.SaveChangesAsync() >= 1;
     }

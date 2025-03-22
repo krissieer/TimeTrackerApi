@@ -32,6 +32,13 @@ public class ActivityService: IActivityService
         return await query.ToListAsync();
     }
 
+    public async Task<Activity?> GetActivityById(int activityId)
+    {
+        return await context.Activities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == activityId);
+    }
+
     /// <summary>
     /// Добавить активности по умолчанию
     /// </summary>
@@ -141,9 +148,11 @@ public class ActivityService: IActivityService
     /// <returns></returns>
     public async Task<bool> DeleteActivity(int activityId)
     {
-        var activity = await context.Activities.FindAsync(activityId);
+        var activity = await context.Activities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == activityId);
         if (activity is null)
-            return false;
+            throw new KeyNotFoundException($"Activity with ID {activityId} not found.");
         context.Activities.Remove(activity);
         return await context.SaveChangesAsync() >= 1;
     }

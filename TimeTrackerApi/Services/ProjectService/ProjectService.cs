@@ -54,9 +54,11 @@ public class ProjectService: IProjectService
     /// <returns></returns>
     public async Task<Project> UpdateProject(string id, string newName)
     {
-        var project = await context.Projects.FirstOrDefaultAsync(a => a.Id == id);
+        var project = await context.Projects
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id);
         if (project == null)
-            return null;
+            throw new KeyNotFoundException($"Project with ID {id} not found.");
         project.Name = newName;
         await context.SaveChangesAsync();
         return project;
@@ -69,9 +71,11 @@ public class ProjectService: IProjectService
     /// <returns></returns>
     public async Task<bool> DeleteProject(string id)
     {
-        var project = await context.Projects.FirstOrDefaultAsync(a => a.Id == id);
-        if (project == null) 
-            return false;
+        var project = await context.Projects
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id);
+        if (project == null)
+            throw new KeyNotFoundException($"Project with ID {id} not found.");
         context.Projects.Remove(project);
         return await context.SaveChangesAsync() >= 1;
     }
