@@ -12,16 +12,6 @@ public class UserService:IUserService
         this.context = context;
     }
 
-    ///// <summary>
-    ///// Получить количество пользователей
-    ///// </summary>
-    ///// <returns></returns>
-    //public async Task<int> GetUsersNumber()
-    //{
-    //    var users = await context.Users.ToListAsync();
-    //    return users.Count;
-    //}
-
     /// <summary>
     /// Получить пользователя по его UserID
     /// </summary>

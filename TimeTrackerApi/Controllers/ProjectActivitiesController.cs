@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using TimeTrackerApi.Models;
 using TimeTrackerApi.Services.ActivityService;
 using TimeTrackerApi.Services.ProjectActivityService;
+using TimeTrackerApi.Services.ProjectUserService;
 
 namespace TimeTrackerApi.Controllers;
 
@@ -12,10 +14,14 @@ namespace TimeTrackerApi.Controllers;
 public class ProjectActivitiesController : ControllerBase
 {
     private readonly IProjectActivityService projectActivityService;
+    private readonly IProjectUserService projectUserService;
+    private readonly IActivityService activityService;
 
-    public ProjectActivitiesController(IProjectActivityService _projectActivityService)
+    public ProjectActivitiesController(IProjectActivityService _projectActivityService, IProjectUserService _projectUserService, IActivityService _activityService)
     {
         projectActivityService = _projectActivityService;
+        projectUserService = _projectUserService;
+        activityService = _activityService;
     }
 
     /// <summary>
@@ -79,11 +85,25 @@ public class ProjectActivitiesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteProjectActivity(string projectId, int activityId)
     {
+        var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userID))
+            return Unauthorized("User not authenticated.");
+
+        Console.WriteLine($"Current User: {userID}");
+        int userId = int.Parse(userID);
+
+        var isCreator = await projectUserService.IsCreator(userId, projectId);
+        var isOwner = await activityService.IsOwner(activityId, userId);
+
+        if (!isCreator && !isOwner)
+            return Conflict("You don't have access to delete this activity.");
+
         var result = await projectActivityService.DeleteProjectActivity(activityId, projectId);
         if (!result)
             return StatusCode(500, "Failed to delete activity from project due to server error.");
         return NoContent();
     }
+    //Пользователь может удалить из проекта только те активности, которые принадлежат ему. Создатель может удалить любые активности
 }
 
 public class ProjectActivityDto

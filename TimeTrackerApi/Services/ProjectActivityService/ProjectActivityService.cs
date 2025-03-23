@@ -64,6 +64,7 @@ public class ProjectActivityService: IProjectActivityService
             .FirstOrDefaultAsync(a => a.ActivityId == activityId && a.ProjectId == projectId);
         if (projectActivity == null)
             throw new KeyNotFoundException($"Activity with ID {activityId} not found in project with ID {projectId}.");
+       
         context.ProjectActivities.Remove(projectActivity);
         return await context.SaveChangesAsync() >= 1;
     }

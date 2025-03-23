@@ -2,9 +2,13 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using TimeTrackerApi.Controllers;
 using TimeTrackerApi.Models;
 using TimeTrackerApi.Services.ActivityService;
+using TimeTrackerApi.Services.ProjectActivityService;
 using TimeTrackerApi.Services.ProjectService;
+using TimeTrackerApi.Services.ProjectUserService;
 
 namespace TimeTrackerApi.Controllers
 {
@@ -13,10 +17,12 @@ namespace TimeTrackerApi.Controllers
     public class ProjectsController : ControllerBase
     {
         private readonly IProjectService projectService;
+        private readonly  IProjectUserService projectUserService;
 
-        public ProjectsController(IProjectService _projectService)
+        public ProjectsController(IProjectService _projectService, IProjectUserService _projectUserService)
         {
             projectService = _projectService;
+            projectUserService = _projectUserService;
         }
 
         /// <summary>
@@ -52,19 +58,38 @@ namespace TimeTrackerApi.Controllers
         [Authorize]
         public async Task<IActionResult> AddProject([FromBody] ProjectRequest dto)
         {
-            var project = await projectService.AddProject(dto.ProjectId, dto.ProjectName);
+            var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userID))
+                return Unauthorized("User not authenticated.");
+            Console.WriteLine($"Current User: {userID}");
+            int userId = int.Parse(userID);
+
+            var project = await projectService.AddProject(dto.ProjectId, dto.ProjectName); //добавление в Projects
             if (project == null)
             {
                 return Conflict("Project already exists.");
             }
-            var result = new ProjectRequest
+
+            var projectUser = await projectUserService.AddProjectUser(userId, dto.ProjectId, true); //Добавление в ProjectUsers
+            if (projectUser == null)
             {
-                ProjectId = project.Id,
-                ProjectName = project.Name,
-            };
-            return Ok(result);
+                return Conflict("Project does not exist or the user is already assigned to this project.");
+            }
+
+            return Ok(new ProjectUserRequest
+            {
+                Id_User = projectUser.UserId,
+                Id_Project = project.Id,
+                Name_Project = project.Name,
+                IsCreator = projectUser.Creator
+            });
         }
 
+        /// <summary>
+        /// Обновление названия проекта
+        /// </summary>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPut]
         [Authorize]
         public async Task<IActionResult> UpdateProject([FromBody] ProjectRequest dto)
@@ -82,19 +107,37 @@ namespace TimeTrackerApi.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Удаление проекта
+        /// </summary>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
         [HttpDelete("{projectId}")]
         [Authorize]
         public async Task<ActionResult> DeleteProject(string projectId)
         {
+            var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userID))
+                return Unauthorized("User not authenticated.");
+            Console.WriteLine($"Current User: {userID}");
+            int userId = int.Parse(userID);
+
             var project = await projectService.CheckProjectIdExistence(projectId);
             if (!project)
                 return NotFound($"Project with ID {projectId} not found.");
 
+            var isCreator = await projectUserService.IsCreator(userId, projectId);
+            Console.WriteLine($" User { userId} is creator: {isCreator}");
+            if (!isCreator)
+                return Conflict("Only the project creator can delete the project.");
+           
             var success = await projectService.DeleteProject(projectId);
             if (!success)
                 StatusCode(500, "Failed to delete project due to server error.");
             return NoContent();
         }
+        //(Удалить проект может только его создатель)
     }
 }
 
@@ -102,4 +145,12 @@ public class ProjectRequest
 {
     public string ProjectId { get; set; }
     public string ProjectName { get; set; }
+}
+
+public class ProjectUserRequest
+{
+    public int Id_User { get; set; }
+    public string Id_Project { get; set; }
+    public string Name_Project { get; set; }
+    public bool IsCreator { get; set; }
 }

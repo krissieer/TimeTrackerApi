@@ -20,10 +20,8 @@ namespace TimeTrackerApi.Services.ActivityService
 
         Task<int> GetStatusById(int activityId);
 
-        //Task<bool> PutActivityInArchive(int activityId);
-
-        //Task<bool> RecoverActivity(int activityId);
-
         Task<bool> ChangeStatus(int activityId, int newStatusId);
+
+        Task<bool> IsOwner(int activityId, int userId);
     }
 }
