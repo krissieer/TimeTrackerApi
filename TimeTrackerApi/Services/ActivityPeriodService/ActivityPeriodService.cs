@@ -36,6 +36,7 @@ public class ActivityPeriodService: IActivityPeriodService
         };
         await context.ActivityPeriods.AddAsync(activityPeriod);
         await context.SaveChangesAsync();
+        Console.WriteLine($"Активность добавлена: {activityPeriod.StartTime}");
         return activityPeriod;
     }
 
@@ -77,9 +78,10 @@ public class ActivityPeriodService: IActivityPeriodService
 
         TimeSpan? result = stopTime - startTime;
         activityPeriod.TotalTime = result;
-        long? sec = ((TimeSpan)result).TotalSeconds as long?;
-        activityPeriod.TotalSeconds = sec;
 
+        long totSec = (long)result.Value.TotalSeconds;
+        activityPeriod.TotalSeconds = totSec;
+        Console.WriteLine($"Total Seconds: {totSec}");
         await context.SaveChangesAsync();
 
         return activityPeriod;
@@ -136,7 +138,7 @@ public class ActivityPeriodService: IActivityPeriodService
     public async Task<ActivityPeriod> StopTracking(int activityId)
     {
         var result = await SetStopTime(activityId);
-        //Console.WriteLine($"ЛОГ В StopTracking. Начало: {result.StartTime}, Конец: {result.StopTime}, Всего: {result.TotalTime}");
+        Console.WriteLine($"ЛОГ В StopTracking. Начало: {result.StartTime}, Конец: {result.StopTime}, Всего: {result.TotalTime}");
         if (result is null)
             return null;
 

@@ -19,7 +19,13 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+             .AddJsonOptions(options =>
+             {
+                 options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
+                 options.JsonSerializerOptions.PropertyNamingPolicy = null;
+             });
+
         builder.Services.AddEndpointsApiExplorer();
         //builder.Services.AddSwaggerGen();
 
@@ -29,7 +35,7 @@ public class Program
 
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Description = "Введите 'Bearer' [пробел] и ваш токен в формате JWT для доступа к защищенным ресурсам.",
+                Description = "Enter token",
                 Type = SecuritySchemeType.Http,
                 Scheme = "bearer",
                 BearerFormat = "JWT",

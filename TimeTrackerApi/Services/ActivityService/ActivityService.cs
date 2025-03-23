@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Xml.Linq;
 using TimeTrackerApi.Models;
 
 namespace TimeTrackerApi.Services.ActivityService;
@@ -46,30 +47,45 @@ public class ActivityService: IActivityService
     /// <returns></returns>
     public async Task<bool> AddDefaultActivities(int userId)
     {
-        var activities = new List<Activity>
+        var activities = new List<Activity>();
+        string[] names = { "Работа", "Спорт", "Отдых" };
+        for (int i = 0; i < 3; i++)
         {
-            new Activity
+            if (await CheckActivityNameExistence(userId, names[i]))
+                return false;
+            var newAct = new Activity
             {
-                Name = "Работа",
+                Name = names[i],
                 UserId = userId,
                 ActiveFrom = DateTime.Now.Date,
                 StatusId = 1
-            },
-            new Activity
-            {
-                Name = "Спорт",
-                UserId = userId,
-                ActiveFrom = DateTime.Now.Date,
-                StatusId = 1
-            },
-            new Activity
-            {
-                Name = "Отдых",
-                UserId = userId,
-                ActiveFrom = DateTime.Now.Date,
-                StatusId = 1
-            }
-        };
+            };
+            activities.Add(newAct);
+        }
+        //var activities = new List<Activity>
+        //{
+        //    new Activity
+        //    {
+        //        Name = "Работа",
+        //        UserId = userId,
+        //        ActiveFrom = DateTime.Now.Date,
+        //        StatusId = 1
+        //    },
+        //    new Activity
+        //    {
+        //        Name = "Спорт",
+        //        UserId = userId,
+        //        ActiveFrom = DateTime.Now.Date,
+        //        StatusId = 1
+        //    },
+        //    new Activity
+        //    {
+        //        Name = "Отдых",
+        //        UserId = userId,
+        //        ActiveFrom = DateTime.Now.Date,
+        //        StatusId = 1
+        //    }
+        //};
         await context.Activities.AddRangeAsync(activities);
         return await context.SaveChangesAsync() >= 1;
     }
@@ -121,15 +137,24 @@ public class ActivityService: IActivityService
         try
         {
             if (string.IsNullOrWhiteSpace(newname))
+            {
+                Console.WriteLine("пустое имя!!");
                 return false;
+            }    
 
             var activity = await context.Activities.FirstOrDefaultAsync(a => a.Id == activityId);
             if (activity == null)
+            {
+                Console.WriteLine("Нет такой активности");
                 return false;
+            }
 
             var user = activity.UserId;
             if (await CheckActivityNameExistence(user, newname))
+            {
+                Console.WriteLine("Имя существует!!");
                 return false;
+            }
 
             activity.Name = newname;
             return await context.SaveChangesAsync() >= 1;

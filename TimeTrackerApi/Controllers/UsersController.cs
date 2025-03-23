@@ -63,7 +63,7 @@ public class UsersController : ControllerBase
         {
             return BadRequest("Cannot request both archived and active activities at the same time.");
         }
-        var activities = await activityService.GetActivities(userId, onlyArchived ?? false, onlyActive ?? false);
+        var activities = await activityService.GetActivities(userId, onlyActive ?? false, onlyArchived ?? false);
         if (!activities.Any())
         {
             return Ok(new List<ActivityDto>());

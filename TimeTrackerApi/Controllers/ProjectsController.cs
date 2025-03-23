@@ -31,7 +31,7 @@ namespace TimeTrackerApi.Controllers
 
             if (!projects.Any())
             {
-                return Ok(new List<ProjectRequest>());
+                return Ok(new List<Project>());
             }
 
             var result = projects.Select(a => new ProjectRequest
@@ -77,7 +77,7 @@ namespace TimeTrackerApi.Controllers
             var result = new ProjectRequest
             {
                 ProjectId = project.Id,
-                ProjectName = project.Name,
+                ProjectName = project.Name
             };
             return Ok(result);
         }

@@ -5,6 +5,7 @@ using TimeTrackerApi.Models;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using TimeTrackerApi.Services.ActivityService;
 using System;
+using System.Text.Json.Serialization;
 
 namespace TimeTrackerApi.Controllers;
 
@@ -74,6 +75,7 @@ public class ActivityPeriodsController : ControllerBase
         }
         TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
+
         var actPeriod = dto.IsStarted
            ? await activityPeriodService.StartTracking(dto.ActivityId)
            : await activityPeriodService.StopTracking(dto.ActivityId);
@@ -83,19 +85,19 @@ public class ActivityPeriodsController : ControllerBase
             return BadRequest(dto.IsStarted ? "Failed to start tracking." : "Failed to stop tracking.");
         }
 
+        var startTime = DateTime.SpecifyKind(actPeriod.StartTime, DateTimeKind.Utc);
+        var stopTime = actPeriod.StopTime.HasValue
+            ? DateTime.SpecifyKind(actPeriod.StopTime.Value, DateTimeKind.Utc)
+            : (DateTime?)null;
+
+        Console.WriteLine($"Старт: {actPeriod.StartTime}");
+
         var response = new ActivityPeriodDto
         {
-            //actPeriod.Id,
-            //actPeriod.ActivityId,
-            //StartTime = TimeZoneInfo.ConvertTimeFromUtc(actPeriod.StartTime, tz),
-            //StopTime = actPeriod.StopTime.HasValue
-            //    ? TimeZoneInfo.ConvertTimeFromUtc(actPeriod.StopTime.Value, tz)
-            //    : (DateTime?)null
-
             ActivityPeriodId = actPeriod.Id,
             ActId = actPeriod.ActivityId,
-            Starttime = TimeZoneInfo.ConvertTimeFromUtc(actPeriod.StartTime, tz),
-            Stoptime = TimeZoneInfo.ConvertTimeFromUtc(actPeriod.StopTime.Value, tz),
+            Starttime = TimeZoneInfo.ConvertTimeFromUtc(startTime, tz),
+            Stoptime = stopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(stopTime.Value, tz) : null,
             Totaltime = actPeriod.TotalTime,
             Totalseconds = actPeriod.TotalSeconds,
         };
@@ -146,21 +148,22 @@ public class ActivityPeriodsController : ControllerBase
         if (result is null)
             return BadRequest("Failed to update activity period.");
 
-        return Ok(new
-        {
-            //result.Id,
-            //result.ActivityId,
-            //result.StartTime,
-            //result.StopTime,
-            //result.TotalTime,
-            //result.TotalSeconds
+        TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
+        var startTime = DateTime.SpecifyKind(result.StartTime, DateTimeKind.Utc);
+        var stopTime = result.StopTime.HasValue
+            ? DateTime.SpecifyKind(result.StopTime.Value, DateTimeKind.Utc)
+            : (DateTime?)null;
 
+        Console.WriteLine($"Total Time: {result.TotalTime} Seconds: {result.TotalSeconds}");
+
+        return Ok(new ActivityPeriodDto
+        {
             ActivityPeriodId = result.Id,
             ActId = result.ActivityId,
-            Starttime = result.StartTime,
-            Stoptime = result.StopTime,
+            Starttime = TimeZoneInfo.ConvertTimeFromUtc(startTime, tz),
+            Stoptime = stopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(stopTime.Value, tz) : null,
             Totaltime = result.TotalTime,
-            Totalseconds = result.TotalSeconds
+            Totalseconds = result.TotalSeconds,
         });
     }
 
@@ -188,7 +191,9 @@ public class StartStopTrackingDto
 public class UpdatePeriod
 {
     public int ActivityPeriodId { get; set; }
+    [JsonConverter(typeof(DateTimeConverter))]
     public DateTime? NewStartTime { get; set; } = null;
+    [JsonConverter(typeof(DateTimeConverter))]
     public DateTime? NewStopTime { get; set; } = null;
 }
 

@@ -54,13 +54,12 @@ public class ProjectService: IProjectService
     /// <returns></returns>
     public async Task<Project> UpdateProject(string id, string newName)
     {
-        var project = await context.Projects
-            .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == id);
+        var project = await context.Projects.FirstOrDefaultAsync(a => a.Id == id);
         if (project == null)
             throw new KeyNotFoundException($"Project with ID {id} not found.");
         project.Name = newName;
         await context.SaveChangesAsync();
+        Console.WriteLine("Cuerrent Name: " + project.Name);
         return project;
     }
 

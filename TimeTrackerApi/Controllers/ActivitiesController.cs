@@ -141,18 +141,28 @@ public class ActivitiesController : ControllerBase
         {
             return NotFound($"Activity with ID {dto.ActivityId} not found.");
         }
+
         bool result = false;
         if (dto.UpdateName)
         {
-            result = await activityService.UpdateActivityName(dto.ActivityId, dto.NewName!);
+            result = await activityService.UpdateActivityName(dto.ActivityId, dto.NewName);
+            if (result)
+                Console.WriteLine("все ок, обновлено!!");
+            else Console.WriteLine("Ошибка тут");
         }
-        if (dto.Archived)
+        if (activity.StatusId != 3 && dto.Archived)
         {
             result = await activityService.ChangeStatus(dto.ActivityId, 3);
+            if (result)
+                Console.WriteLine("все оок, обновлено!!");
+            else Console.WriteLine("Ошмбка туут");
         }
-        if (!dto.Archived)
+        if (activity.StatusId != 1 && !dto.Archived)
         {
             result = await activityService.ChangeStatus(dto.ActivityId, 1);
+            if (result)
+                Console.WriteLine("все ооок, обновлено!!");
+            else Console.WriteLine("Ошибка тууут");
         }
 
         if (!result)
