@@ -73,8 +73,8 @@ public class ActivityPeriodsController : ControllerBase
         {
             return NotFound($"Activity with ID {dto.ActivityId} not found.");
         }
-        TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
+        TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
         var actPeriod = dto.IsStarted
            ? await activityPeriodService.StartTracking(dto.ActivityId)
@@ -90,8 +90,6 @@ public class ActivityPeriodsController : ControllerBase
             ? DateTime.SpecifyKind(actPeriod.StopTime.Value, DateTimeKind.Utc)
             : (DateTime?)null;
 
-        Console.WriteLine($"Старт: {actPeriod.StartTime}");
-
         var response = new ActivityPeriodDto
         {
             ActivityPeriodId = actPeriod.Id,
@@ -103,28 +101,6 @@ public class ActivityPeriodsController : ControllerBase
         };
         return Ok(response);
     }
-    //public async Task<IActionResult> StartTracking(int activityId)
-    //{
-    //    var result = await activityPeriodService.StartTracking(activityId);
-    //    if (result == 0)
-    //        return BadRequest("Failed to start tracking.");
-    //    else if (result == -1)
-    //        return BadRequest("Activity is already tracking");
-    //    return Ok("Activity start tracking");
-    //}
-    //public async Task<ActionResult<string>> StopTracking(int activityId)
-    //{
-    //    TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
-    //    var result = await activityPeriodService.StopTracking(activityId);
-    //    if (result is null)
-    //        return BadRequest("Failed to stop tracking.");
-
-    //    string formattedResult = $"StartTime: {TimeZoneInfo.ConvertTimeFromUtc(result.StartTime, tz)}, " +
-    //                             $"StopTime: {TimeZoneInfo.ConvertTimeFromUtc(result.StopTime, tz)}, " +
-    //                             $"TotalTime: {result.TotalTime}";
-    //    return Ok(formattedResult);
-    //}
-
 
     [HttpPut]
     [Authorize]
@@ -153,8 +129,6 @@ public class ActivityPeriodsController : ControllerBase
         var stopTime = result.StopTime.HasValue
             ? DateTime.SpecifyKind(result.StopTime.Value, DateTimeKind.Utc)
             : (DateTime?)null;
-
-        Console.WriteLine($"Total Time: {result.TotalTime} Seconds: {result.TotalSeconds}");
 
         return Ok(new ActivityPeriodDto
         {

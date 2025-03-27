@@ -17,16 +17,6 @@ public class ProjectUsersController : ControllerBase
         projectUserService = _projectUserService;
     }
 
-    //[HttpGet("projects/{userId}")]
-    //[Authorize]
-    //public async Task<IActionResult> GetProjectsByUserId(int userId)
-    //{
-    //    var projects = await projectUserService.GetProjectsByUserId(userId);
-    //    if (projects.Count == 0)
-    //        return NotFound("Records not found");
-    //    return Ok(projects);
-    //}
-
     /// <summary>
     /// Получить пользователй проекта
     /// </summary>

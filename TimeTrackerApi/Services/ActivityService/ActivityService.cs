@@ -62,30 +62,6 @@ public class ActivityService: IActivityService
             };
             activities.Add(newAct);
         }
-        //var activities = new List<Activity>
-        //{
-        //    new Activity
-        //    {
-        //        Name = "Работа",
-        //        UserId = userId,
-        //        ActiveFrom = DateTime.Now.Date,
-        //        StatusId = 1
-        //    },
-        //    new Activity
-        //    {
-        //        Name = "Спорт",
-        //        UserId = userId,
-        //        ActiveFrom = DateTime.Now.Date,
-        //        StatusId = 1
-        //    },
-        //    new Activity
-        //    {
-        //        Name = "Отдых",
-        //        UserId = userId,
-        //        ActiveFrom = DateTime.Now.Date,
-        //        StatusId = 1
-        //    }
-        //};
         await context.Activities.AddRangeAsync(activities);
         return await context.SaveChangesAsync() >= 1;
     }
@@ -138,22 +114,19 @@ public class ActivityService: IActivityService
         {
             if (string.IsNullOrWhiteSpace(newname))
             {
-                Console.WriteLine("пустое имя!!");
-                return false;
+                throw new Exception("New name is empty");
             }    
 
             var activity = await context.Activities.FirstOrDefaultAsync(a => a.Id == activityId);
             if (activity == null)
             {
-                Console.WriteLine("Нет такой активности");
-                return false;
+                throw new Exception("Activity not found.");
             }
 
             var user = activity.UserId;
             if (await CheckActivityNameExistence(user, newname))
             {
-                Console.WriteLine("Имя существует!!");
-                return false;
+                throw new Exception("Username is already exist");
             }
 
             activity.Name = newname;
@@ -161,8 +134,7 @@ public class ActivityService: IActivityService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка обновления названия активности: {ex.Message}");
-            return false;
+            throw new Exception($"Error while updating activity name: {ex.Message}");
         }
     }
 
@@ -194,34 +166,6 @@ public class ActivityService: IActivityService
             return 0;
         return activity.StatusId;
     }
-
-    ///// <summary>
-    ///// Отправить активность в архив
-    ///// </summary>
-    ///// <param name="activityId"></param>
-    ///// <returns></returns>
-    //public async Task<bool> PutActivityInArchive(int activityId)
-    //{
-    //    var activity = await context.Activities.FindAsync(activityId);
-    //    if (activity is null)
-    //        return false;
-    //    activity.StatusId = 3;
-    //    return await context.SaveChangesAsync() >= 1;
-    //}
-
-    ///// <summary>
-    ///// Восстановить активность из архива
-    ///// </summary>
-    ///// <param name="activityId"></param>
-    ///// <returns></returns>
-    //public async Task<bool> RecoverActivity(int activityId)
-    //{
-    //    var activity = await context.Activities.FindAsync(activityId);
-    //    if (activity is null)
-    //        return false;
-    //    activity.StatusId = 1;
-    //    return await context.SaveChangesAsync() >=1;
-    //}
 
     /// <summary>
     /// Изменить статус активности

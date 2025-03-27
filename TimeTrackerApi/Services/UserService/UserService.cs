@@ -13,26 +13,6 @@ public class UserService:IUserService
     }
 
     /// <summary>
-    /// Получить пользователя по его UserID
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <returns></returns>
-    //public async Task<User> GetUserById(int userId)
-    //{
-    //    return await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-    //}
-
-    ///// <summary>
-    ///// Получить пользователя по chatID
-    ///// </summary>
-    ///// <param name="chatId"></param>
-    ///// <returns></returns>
-    //public async Task<User> GetUserByChatId(long chatId)
-    //{
-    //    return await context.Users.FirstOrDefaultAsync(u => u.ChatId == chatId);
-    //}
-
-    /// <summary>
     /// Проверка имени на существование
     /// </summary>
     /// <param name="name"></param>
@@ -74,8 +54,7 @@ public class UserService:IUserService
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Ошибка: " + ex.Message);
-                return null;
+                throw new Exception($"registration error: {ex.Message}");
             }
            
         }
@@ -90,13 +69,21 @@ public class UserService:IUserService
     /// <returns></returns>
     public async Task<string> Login(string name, string password)
     {
-        var userInBD = await context.Users.FirstOrDefaultAsync(u => u.Name == name);
-        if (userInBD == null)
-            return string.Empty;
+        try
+        {
+            var userInBD = await context.Users.FirstOrDefaultAsync(u => u.Name == name);
+            if (userInBD == null)
+                return string.Empty;
 
-        if (!PasswordHasher.VerifyPassword(password, userInBD.PasswordHash))
-            return string.Empty;
+            if (!PasswordHasher.VerifyPassword(password, userInBD.PasswordHash))
+                return string.Empty;
 
-        return TokenGeneration.GenerateToken(userInBD.Id);
+            return TokenGeneration.GenerateToken(userInBD.Id);
+        }
+        catch(Exception ex)
+        {
+            throw new Exception($"Login error: {ex.Message}");
+        }
+       
     }
 }

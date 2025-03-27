@@ -16,8 +16,6 @@ namespace TimeTrackerApi.Services.ActivityPeriodService
        
         Task<DateTime> GetStartTimeById(int activityId);
 
-        //Task<bool> StopTracking(int activityId);
-
         Task<ActivityPeriod> StopTracking(int activityId);
 
         Task<bool> DeleteActivityPeriod(int activityPeriodId);

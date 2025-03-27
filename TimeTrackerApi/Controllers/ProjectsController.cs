@@ -61,16 +61,15 @@ namespace TimeTrackerApi.Controllers
             var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userID))
                 return Unauthorized("User not authenticated.");
-            Console.WriteLine($"Current User: {userID}");
             int userId = int.Parse(userID);
 
-            var project = await projectService.AddProject(dto.ProjectId, dto.ProjectName); //добавление в Projects
+            var project = await projectService.AddProject(dto.ProjectId, dto.ProjectName); //добавление пользователя в Projects
             if (project == null)
             {
                 return Conflict("Project already exists.");
             }
 
-            var projectUser = await projectUserService.AddProjectUser(userId, dto.ProjectId, true); //Добавление в ProjectUsers
+            var projectUser = await projectUserService.AddProjectUser(userId, dto.ProjectId, true); //Добавление пользователя в ProjectUsers
             if (projectUser == null)
             {
                 return Conflict("Project does not exist or the user is already assigned to this project.");
@@ -120,7 +119,6 @@ namespace TimeTrackerApi.Controllers
 
             if (string.IsNullOrEmpty(userID))
                 return Unauthorized("User not authenticated.");
-            Console.WriteLine($"Current User: {userID}");
             int userId = int.Parse(userID);
 
             var project = await projectService.CheckProjectIdExistence(projectId);
@@ -128,7 +126,6 @@ namespace TimeTrackerApi.Controllers
                 return NotFound($"Project with ID {projectId} not found.");
 
             var isCreator = await projectUserService.IsCreator(userId, projectId);
-            Console.WriteLine($" User { userId} is creator: {isCreator}");
             if (!isCreator)
                 return Conflict("Only the project creator can delete the project.");
            
@@ -137,7 +134,7 @@ namespace TimeTrackerApi.Controllers
                 StatusCode(500, "Failed to delete project due to server error.");
             return NoContent();
         }
-        //(Удалить проект может только его создатель)
+        //Удалить проект может только его создатель
     }
 }
 

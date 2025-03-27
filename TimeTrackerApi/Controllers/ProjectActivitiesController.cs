@@ -47,16 +47,6 @@ public class ProjectActivitiesController : ControllerBase
         return Ok(result);
     }
 
-    //[HttpGet("projects/{activityId}")]
-    //[Authorize]
-    //public async Task<IActionResult> GetProjectsByActivityId(int activityId)
-    //{
-    //    var projects = await projectActivityService.GetProjectsByActivityId(activityId);
-    //    if (projects.Count == 0)
-    //        return NotFound("Records not found");
-    //    return Ok(projects);
-    //}
-
     /// <summary>
     /// Добавить Активность в Проект
     /// </summary>

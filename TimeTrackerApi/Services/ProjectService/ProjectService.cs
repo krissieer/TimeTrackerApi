@@ -59,7 +59,6 @@ public class ProjectService: IProjectService
             throw new KeyNotFoundException($"Project with ID {id} not found.");
         project.Name = newName;
         await context.SaveChangesAsync();
-        Console.WriteLine("Cuerrent Name: " + project.Name);
         return project;
     }
 

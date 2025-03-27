@@ -36,7 +36,6 @@ public class ActivityPeriodService: IActivityPeriodService
         };
         await context.ActivityPeriods.AddAsync(activityPeriod);
         await context.SaveChangesAsync();
-        Console.WriteLine($"Активность добавлена: {activityPeriod.StartTime}");
         return activityPeriod;
     }
 
@@ -58,18 +57,14 @@ public class ActivityPeriodService: IActivityPeriodService
         if (data1.HasValue)
         {
             var local = DateTime.SpecifyKind(data1.Value, DateTimeKind.Unspecified);
-            Console.WriteLine("entered localtime: " + local);
             var utcStartTime = TimeZoneInfo.ConvertTimeToUtc(local, timeZone);
-            Console.WriteLine("converted UTC time: " + utcStartTime);
             activityPeriod.StartTime = DateTime.SpecifyKind(utcStartTime, DateTimeKind.Unspecified); 
         }
              
         if (data2.HasValue)
         {
             var local = DateTime.SpecifyKind(data2.Value, DateTimeKind.Unspecified);
-            Console.WriteLine("entered localtime: " + local);
             var utcStopTime = TimeZoneInfo.ConvertTimeToUtc(local, timeZone);
-            Console.WriteLine("converted UTC time: " + utcStopTime);
             activityPeriod.StopTime = DateTime.SpecifyKind(utcStopTime, DateTimeKind.Unspecified); 
         }
 
@@ -81,37 +76,10 @@ public class ActivityPeriodService: IActivityPeriodService
 
         long totSec = (long)result.Value.TotalSeconds;
         activityPeriod.TotalSeconds = totSec;
-        Console.WriteLine($"Total Seconds: {totSec}");
         await context.SaveChangesAsync();
 
         return activityPeriod;
     }
-
-    /// <summary>
-    /// Начать отслеживание
-    /// </summary>
-    /// <param name="activityId"></param>
-    /// <returns></returns>
-    //public async Task<int> StartTracking(int activityId)
-    //{
-    //    var result = await AddActivityPeriod(activityId);
-    //    if (result is null)
-    //        return 0;
-    //    var activity = await context.Activities.FindAsync(activityId);
-    //    if (activity is null)
-    //    {
-    //        Console.WriteLine("Активность пустая");
-    //        return 0;
-    //    }
-    //    if (activity.StatusId == 2)
-    //    {
-    //        Console.WriteLine("Активность уже запущена");
-    //        return -1;
-    //    }
-    //    activity.StatusId = 2;
-    //    await context.SaveChangesAsync();
-    //    return 1;
-    //}
 
     public async Task<ActivityPeriod> StartTracking(int activityId)
     {
@@ -122,8 +90,7 @@ public class ActivityPeriodService: IActivityPeriodService
 
         if (activity is not null && activity.StatusId == 2)
         {
-            Console.WriteLine("Активность уже запущена");
-            return null;
+            throw new Exception("Activity is already started");
         }
         activity.StatusId = 2;
         await context.SaveChangesAsync();
@@ -138,9 +105,8 @@ public class ActivityPeriodService: IActivityPeriodService
     public async Task<ActivityPeriod> StopTracking(int activityId)
     {
         var result = await SetStopTime(activityId);
-        Console.WriteLine($"ЛОГ В StopTracking. Начало: {result.StartTime}, Конец: {result.StopTime}, Всего: {result.TotalTime}");
         if (result is null)
-            return null;
+            throw new Exception("Failed to stop");
 
         var activity = await context.Activities.FindAsync(activityId);
         activity.StatusId = 1;
@@ -160,7 +126,7 @@ public class ActivityPeriodService: IActivityPeriodService
 
         var activityPeriod = await context.ActivityPeriods.FirstOrDefaultAsync(a => a.ActivityId == activityId && a.StartTime == startTime);
         if (activityPeriod is null)
-            return null;
+            throw new Exception("ActivityPeriod not found.");
 
         DateTime stopTime = DateTime.Now;
         DateTime time = DateTime.SpecifyKind(stopTime, DateTimeKind.Unspecified);
@@ -185,8 +151,7 @@ public class ActivityPeriodService: IActivityPeriodService
         if (activityPeriod == null)
             throw new Exception("Start time not found for the given activity ID.");
 
-        return activityPeriod.StartTime;
-        
+        return activityPeriod.StartTime;    
     }
 
     /// <summary>
@@ -239,6 +204,6 @@ public class ActivityPeriodService: IActivityPeriodService
     }
     // Запустить GetStatistic в цикле (по каждой необходимой активности - по дефолту все активности пользователя (получить список активностей))
     // Для того чтобы получить статистику за определенные проекты - получить активности,
-    //  которые учпствуют в этих проектах + эти активности принадлежат текущему пользователю, и запустить GetStatistic для этого списка активностей
+    // которые учпствуют в этих проектах + эти активности принадлежат текущему пользователю, и запустить GetStatistic для этого списка активностей
 
 }

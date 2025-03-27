@@ -22,31 +22,6 @@ public class ActivitiesController : ControllerBase
         projectActivityService = _projectActivityService;
     }
 
-    //[HttpGet]
-    //[Authorize]
-    //public async Task<IActionResult> GetActivities(bool onlyArchived, bool onlyActive, int userId)
-    //{
-    //    List<Activity> activities = null;
-    //    //все активности
-    //    if (!onlyArchived && !onlyActive)
-    //    {
-    //        activities = await activityService.GetActivities(userId, false, false);
-    //    }
-    //    //только активные
-    //    else if (onlyActive)
-    //    {
-    //        activities = await activityService.GetActivities(userId);
-    //    }
-    //    //только архивированные
-    //    else if (onlyArchived)
-    //    {
-    //        activities = await activityService.GetActivities(userId, false, true);
-    //    }
-    //    if (activities.Count == 0)
-    //        return NotFound("Records not found");
-    //    return Ok(activities);
-    //}
-
     /// <summary>
     /// Получить статус активности
     /// </summary>
@@ -146,23 +121,14 @@ public class ActivitiesController : ControllerBase
         if (dto.UpdateName)
         {
             result = await activityService.UpdateActivityName(dto.ActivityId, dto.NewName);
-            if (result)
-                Console.WriteLine("все ок, обновлено!!");
-            else Console.WriteLine("Ошибка тут");
         }
         if (activity.StatusId != 3 && dto.Archived)
         {
             result = await activityService.ChangeStatus(dto.ActivityId, 3);
-            if (result)
-                Console.WriteLine("все оок, обновлено!!");
-            else Console.WriteLine("Ошмбка туут");
         }
         if (activity.StatusId != 1 && !dto.Archived)
         {
             result = await activityService.ChangeStatus(dto.ActivityId, 1);
-            if (result)
-                Console.WriteLine("все ооок, обновлено!!");
-            else Console.WriteLine("Ошибка тууут");
         }
 
         if (!result)

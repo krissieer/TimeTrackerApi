@@ -27,7 +27,6 @@ public class Program
              });
 
         builder.Services.AddEndpointsApiExplorer();
-        //builder.Services.AddSwaggerGen();
 
         builder.Services.AddSwaggerGen(c =>
         {
@@ -89,6 +88,7 @@ public class Program
 
         app.UseSwagger();
         app.UseSwaggerUI();
+
         //app.UseSwagger();
         //app.UseSwaggerUI(c =>
         //{
