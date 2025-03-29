@@ -68,6 +68,11 @@ public class ActivityPeriodService: IActivityPeriodService
             activityPeriod.StopTime = DateTime.SpecifyKind(utcStopTime, DateTimeKind.Unspecified); 
         }
 
+        if (activityPeriod.StopTime.HasValue && activityPeriod.StopTime <= activityPeriod.StartTime)
+        {
+            throw new InvalidOperationException("StopTime must be greater than StartTime.");
+        }
+
         DateTime startTime = activityPeriod.StartTime;
         DateTime? stopTime = activityPeriod.StopTime;
 
@@ -176,7 +181,7 @@ public class ActivityPeriodService: IActivityPeriodService
     /// <param name="firstdata"></param>
     /// <param name="seconddata"></param>
     /// <returns></returns>
-    public async Task<TimeSpan> GetStatistic(int activityId, DateTime? firstdata = null, DateTime? seconddata = null)
+    public async Task<List<ActivityPeriod>> GetStatistic(int activityId, DateTime? firstdata = null, DateTime? seconddata = null)
     {
         var query = context.ActivityPeriods.AsQueryable();
 
@@ -199,8 +204,9 @@ public class ActivityPeriodService: IActivityPeriodService
         else
             query = query.Where(a => a.ActivityId == activityId);
 
-        var totalSeconds = await query.SumAsync(a => (long?)a.TotalSeconds) ?? 0;
-        return TimeSpan.FromSeconds(totalSeconds);
+        //var totalSeconds = await query.SumAsync(a => (long?)a.TotalSeconds) ?? 0;
+        //return TimeSpan.FromSeconds(totalSeconds);
+        return await query.ToListAsync();
     }
     // Запустить GetStatistic в цикле (по каждой необходимой активности - по дефолту все активности пользователя (получить список активностей))
     // Для того чтобы получить статистику за определенные проекты - получить активности,

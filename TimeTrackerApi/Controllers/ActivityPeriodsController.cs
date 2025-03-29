@@ -39,7 +39,8 @@ public class ActivityPeriodsController : ControllerBase
             return NotFound($"Activity with ID {activityId} not found.");
         }
 
-        TimeSpan? statistic = null;
+        var statistic = new List<ActivityPeriod>();
+        TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
         if (data1.HasValue && data2.HasValue) // промежуток времени
             statistic = await activityPeriodService.GetStatistic(activityId, data1, data2);
@@ -53,9 +54,22 @@ public class ActivityPeriodsController : ControllerBase
         else
             statistic = await activityPeriodService.GetStatistic(activityId); //весь период
 
-        if (statistic is null)
+        if (statistic.Count == 0)
             return NotFound("No statistics found for the given period");
-        return Ok(statistic);
+
+        var result = statistic.Select(a => new
+        {
+            a.Id,
+            a.ActivityId,
+            StartTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(a.StartTime, DateTimeKind.Utc), tz),
+            StopTime = a.StopTime.HasValue
+               ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(a.StopTime.Value, DateTimeKind.Utc), tz)
+               : (DateTime?)null,
+            TotalTime = a.TotalTime?.ToString(@"hh\:mm\:ss"),
+            a.TotalSeconds
+        });
+
+        return Ok(new { ActivityPeriods = result });
     }
 
     /// <summary>

@@ -19,7 +19,7 @@ namespace TimeTrackerApi.Services.ActivityPeriodService
         Task<ActivityPeriod> StopTracking(int activityId);
 
         Task<bool> DeleteActivityPeriod(int activityPeriodId);
-       
-        Task<TimeSpan> GetStatistic(int activityId, DateTime? firstdata = null, DateTime? seconddata = null);
+
+        Task<List<ActivityPeriod>> GetStatistic(int activityId, DateTime? firstdata = null, DateTime? seconddata = null);
     }
 }
