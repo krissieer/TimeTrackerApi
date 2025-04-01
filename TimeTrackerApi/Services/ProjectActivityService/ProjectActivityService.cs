@@ -19,14 +19,12 @@ public class ProjectActivityService: IProjectActivityService
     /// <param name="activityId"></param>
     /// <param name="projectId"></param>
     /// <returns></returns>
-    public async Task<ProjectActivity> AddProjectActivity(int activityId, string projectId)
+    public async Task<ProjectActivity> AddProjectActivity(int activityId, int projectId)
     {
-        Task<bool> flag = CheckProjectActivity(activityId, projectId);
-        bool isExistInProjectActivities = await flag;
+        //проверить, что активность есть в проекте
+        bool isExist = await context.ProjectActivities.AnyAsync(a => a.ActivityId == activityId && a.ProjectId == projectId);
 
-        bool isExistInProjects = await context.Projects.AnyAsync(p => p.Id == projectId);
-
-        if (!isExistInProjectActivities & isExistInProjects)
+        if (!isExist)
         {
             var projectActivity = new ProjectActivity
             {
@@ -41,23 +39,12 @@ public class ProjectActivityService: IProjectActivityService
     }
 
     /// <summary>
-    /// Проверка записи на существование в таблице "Активности проекта"
-    /// </summary>
-    /// <param name="activityId"></param>
-    /// <param name="projectId"></param>
-    /// <returns></returns>
-    public async Task<bool> CheckProjectActivity(int activityId, string projectId)
-    {
-        return await context.ProjectActivities.AnyAsync(a => a.ActivityId == activityId && a.ProjectId == projectId);
-    }
-
-    /// <summary>
     /// Удалить запись из таблицы "Активности проекта"
     /// </summary>
     /// <param name="activityId"></param>
     /// <param name="projectId"></param>
     /// <returns></returns>
-    public async Task<bool> DeleteProjectActivity(int activityId, string projectId)
+    public async Task<bool> DeleteProjectActivity(int activityId, int projectId)
     {
         var projectActivity = await context.ProjectActivities
             .AsNoTracking()
@@ -74,15 +61,15 @@ public class ProjectActivityService: IProjectActivityService
     /// </summary>
     /// <param name="projectId"></param>
     /// <returns></returns>
-    public async Task<List<ProjectActivity>> GetActivitiesByProjectId(string projectId)
+    public async Task<List<ProjectActivity>> GetActivitiesByProjectId(int projectId)
     {
         var query = context.ProjectActivities.AsQueryable();
-        query = query.Where(a => a.ProjectId.Equals(projectId));
+        query = query.Where(a => a.ProjectId == projectId);
         return await query.ToListAsync(); 
     }
 
     /// <summary>
-    /// Получить список проектов, в которых состоит активность
+    /// Получить список проектов, в которых участвует активность
     /// </summary>
     /// <param name="activityId"></param>
     /// <returns></returns>

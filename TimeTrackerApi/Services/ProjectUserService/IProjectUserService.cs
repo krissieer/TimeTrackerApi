@@ -1,21 +1,18 @@
 ﻿using TimeTrackerApi.Models;
 
-namespace TimeTrackerApi.Services.ProjectUserService
+namespace TimeTrackerApi.Services.ProjectUserService;
+
+public interface IProjectUserService
 {
-    public interface IProjectUserService
-    {
-        Task<ProjectUser> AddProjectUser(int userId, string projectId, bool isCreator);
+    Task<ProjectUser> AddProjectUser(int userId, int projectId, bool isCreator);
 
-        Task<bool> CheckProjectIdExistence(string id);
+    Task<ProjectUser> ConnectToProject(int userId, string accessKey);
 
-        Task<bool> CheckProjectUser(int userId, string projectId);
+    Task<bool> DeleteProjectUser(int userId, int projectId);
 
-        Task<bool> DeleteProjectUser(int userId, string projectId);
+    Task<List<ProjectUser>> GetProjectsByUserId(int userId);
 
-        Task<List<ProjectUser>> GetProjectsByUserId(int userId);
+    Task<List<ProjectUser>> GetUsersByProjectId(int projectId);
 
-        Task<List<ProjectUser>> GetUsersByProjectId(string projectId);
-
-        Task<bool> IsCreator(int userId, string projectId);
-    }
+    Task<bool> IsCreator(int userId, int projectId);
 }

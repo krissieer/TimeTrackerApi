@@ -6,7 +6,7 @@ namespace TimeTrackerApi.Models
     {
         public int Id { get; set; }
         public int ActivityId { get; set; }
-        public string ProjectId { get; set; }
+        public int ProjectId { get; set; }
 
         public Project Project { get; set; }
         public Activity Activity { get; set; }

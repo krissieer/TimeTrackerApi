@@ -4,14 +4,16 @@ namespace TimeTrackerApi.Services.ProjectService
 {
     public interface IProjectService
     {
-        Task<Project> AddProject(string id, string name);
-
-        Task<bool> CheckProjectIdExistence(string id);
-
-        Task<Project> UpdateProject(string id, string newName);
-
-        Task<bool> DeleteProject(string id);
-
         Task<List<Project>> GetProjects();
+
+        Task<Project> GetProjectById(int Id);
+
+        Task<Project> AddProject(string name);
+
+        string GenerateKey();
+
+        Task<Project> UpdateProject(int id, string newName);
+
+        Task<bool> DeleteProject(int id);
     }
 }

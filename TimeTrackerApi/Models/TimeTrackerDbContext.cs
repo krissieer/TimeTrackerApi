@@ -48,9 +48,8 @@ public class TimeTrackerDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
             entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
-            entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(20);
+            entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(100);
             entity.Property(e => e.ChatId).HasMaxLength(100).HasDefaultValue(0);
-            entity.HasIndex(e => e.ChatId).IsUnique();
 
             entity.HasMany(e => e.Activities)
                 .WithOne(a => a.User)
@@ -110,7 +109,9 @@ public class TimeTrackerDbContext : DbContext
         modelBuilder.Entity<Project>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
             entity.Property(e => e.Name);
+            entity.Property(e => e.AccessKey);
 
             entity.HasMany(e => e.ProjectUsers)
                   .WithOne(a => a.Project)

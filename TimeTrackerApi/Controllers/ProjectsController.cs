@@ -36,14 +36,13 @@ namespace TimeTrackerApi.Controllers
             var projects = await projectService.GetProjects() ?? new List<Project>();
 
             if (!projects.Any())
-            {
                 return Ok(new List<Project>());
-            }
 
             var result = projects.Select(a => new ProjectRequest
             {
                 ProjectId = a.Id,
-                ProjectName = a.Name
+                ProjectName = a.Name,
+                ProjectKey = a.AccessKey
             });
 
             return Ok(result);
@@ -58,30 +57,23 @@ namespace TimeTrackerApi.Controllers
         [Authorize]
         public async Task<IActionResult> AddProject([FromBody] ProjectRequest dto)
         {
-            var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userID))
+            var USER = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(USER))
                 return Unauthorized("User not authenticated.");
-            int userId = int.Parse(userID);
+            int user_Id = int.Parse(USER);
 
-            var project = await projectService.AddProject(dto.ProjectId, dto.ProjectName); //добавление пользователя в Projects
+            var project = await projectService.AddProject(dto.ProjectName); //добавление пользователя в Projects
             if (project == null)
             {
                 return Conflict("Project already exists.");
             }
-
-            var projectUser = await projectUserService.AddProjectUser(userId, dto.ProjectId, true); //Добавление пользователя в ProjectUsers
+            var projectUser = await projectUserService.AddProjectUser(user_Id, project.Id, true); //Добавление пользователя в ProjectUsers
             if (projectUser == null)
             {
                 return Conflict("Project does not exist or the user is already assigned to this project.");
             }
 
-            return Ok(new ProjectUserRequest
-            {
-                Id_User = projectUser.UserId,
-                Id_Project = project.Id,
-                Name_Project = project.Name,
-                IsCreator = projectUser.Creator
-            });
+            return Ok(new { AccessKey = project.AccessKey });
         }
 
         /// <summary>
@@ -93,6 +85,15 @@ namespace TimeTrackerApi.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateProject([FromBody] ProjectRequest dto)
         {
+            var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userID))
+                return Unauthorized("User not authenticated.");
+            int userId = int.Parse(userID);
+
+            var isCreator = await projectUserService.IsCreator(userId, dto.ProjectId);
+            if (!isCreator)
+                return Conflict("You don't have access to edit this project");
+
             var project = await projectService.UpdateProject(dto.ProjectId, dto.ProjectName);
             if (project == null)
             {
@@ -101,7 +102,8 @@ namespace TimeTrackerApi.Controllers
             var result = new ProjectRequest
             {
                 ProjectId = project.Id,
-                ProjectName = project.Name
+                ProjectName = project.Name,
+                ProjectKey = project.AccessKey
             };
             return Ok(result);
         }
@@ -113,17 +115,16 @@ namespace TimeTrackerApi.Controllers
         /// <returns></returns>
         [HttpDelete("{projectId}")]
         [Authorize]
-        public async Task<ActionResult> DeleteProject(string projectId)
+        public async Task<ActionResult> DeleteProject(int projectId)
         {
             var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
             if (string.IsNullOrEmpty(userID))
                 return Unauthorized("User not authenticated.");
             int userId = int.Parse(userID);
 
-            var project = await projectService.CheckProjectIdExistence(projectId);
-            if (!project)
-                return NotFound($"Project with ID {projectId} not found.");
+            //var project = await projectService.GetProjectById(projectId);
+            //if (project is null)
+            //    return NotFound($"Project with ID {projectId} not found.");
 
             var isCreator = await projectUserService.IsCreator(userId, projectId);
             if (!isCreator)
@@ -134,20 +135,13 @@ namespace TimeTrackerApi.Controllers
                 StatusCode(500, "Failed to delete project due to server error.");
             return NoContent();
         }
-        //Удалить проект может только его создатель
+        //Удалить и реадктировать проект может только его создатель
     }
 }
 
 public class ProjectRequest
 {
-    public string ProjectId { get; set; }
+    public int ProjectId { get; set; }
     public string ProjectName { get; set; }
-}
-
-public class ProjectUserRequest
-{
-    public int Id_User { get; set; }
-    public string Id_Project { get; set; }
-    public string Name_Project { get; set; }
-    public bool IsCreator { get; set; }
+    public string ProjectKey { get; set; }
 }

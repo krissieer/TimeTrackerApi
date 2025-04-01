@@ -24,20 +24,19 @@ public class ProjectUsersController : ControllerBase
     /// <returns></returns>
     [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetProjectUsers(string projectId)
+    public async Task<IActionResult> GetProjectUsers(int projectId)
     {
         var users = await projectUserService.GetUsersByProjectId(projectId);
-
         if (!users.Any())
         {
             return NotFound($"No users found for project with ID {projectId}");
         }
         var result = users.Select(a => new ProjectUserDto
         {
-            Id = a.Id,
-            ProjectId = a.ProjectId,
-            UserId = a.UserId,
-            IsCreator = a.Creator
+            id = a.Id,
+            projectId = a.ProjectId,
+            userId = a.UserId,
+            isCreator = a.Creator
         });
 
         return Ok(result);
@@ -51,7 +50,7 @@ public class ProjectUsersController : ControllerBase
     /// <returns></returns>
     [HttpGet("{projectId}/{userId}/role")]
     [Authorize]
-    public async Task<ActionResult<bool>> GetIsCreator(int userId, string projectId)
+    public async Task<ActionResult<bool>> GetIsCreator(int userId, int projectId)
     {
         var result = await projectUserService.IsCreator(userId, projectId);
         return Ok(result);
@@ -68,17 +67,21 @@ public class ProjectUsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> AddProjectUser([FromBody] ProjectUserDto dto)
     {
-        var result = await projectUserService.AddProjectUser(dto.UserId,dto.ProjectId,dto.IsCreator);
-        if (result == null)
+        ProjectUser user = null;
+        if (string.IsNullOrEmpty(dto.accessKey))
+            user = await projectUserService.AddProjectUser(dto.userId, dto.projectId, dto.isCreator);
+        else
+            user = await projectUserService.ConnectToProject(dto.userId, dto.accessKey);
+        if (user == null)
         {
             return Conflict("Project does not exist or the user is already assigned to this project.");
         }
         return Ok(new ProjectUserDto
         {
-            Id = result.Id,
-            UserId = result.UserId,
-            ProjectId = result.ProjectId,
-            IsCreator = result.Creator
+            id = user.Id,
+            userId = user.UserId,
+            projectId = user.ProjectId,
+            isCreator = user.Creator,
         });
     }
 
@@ -90,7 +93,7 @@ public class ProjectUsersController : ControllerBase
     /// <returns></returns>
     [HttpDelete("{projectId}/{userId}")]
     [Authorize]
-    public async Task<ActionResult<bool>> DeleteProjectUser(string projectId, int userId)
+    public async Task<ActionResult<bool>> DeleteProjectUser(int projectId, int userId)
     {
         var success = await projectUserService.DeleteProjectUser(userId, projectId);
         if (!success)
@@ -101,8 +104,9 @@ public class ProjectUsersController : ControllerBase
 
 public class ProjectUserDto
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
-    public string ProjectId { get; set; }
-    public bool IsCreator { get; set; }
+    public int id { get; set; }
+    public int userId { get; set; }
+    public int projectId { get; set; }
+    public bool isCreator { get; set; }
+    public string accessKey { get; set; } = string.Empty;
 }

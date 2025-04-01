@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TimeTrackerApi.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreate_Final : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,8 +18,10 @@ namespace TimeTrackerApi.Migrations
                 name: "Projects",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    AccessKey = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -47,7 +49,7 @@ namespace TimeTrackerApi.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ChatId = table.Column<long>(type: "bigint", maxLength: 100, nullable: false, defaultValue: 0L),
                     Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    PasswordHash = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false)
+                    PasswordHash = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -61,7 +63,7 @@ namespace TimeTrackerApi.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    ActiveFrom = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ActiveFrom = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     UserId = table.Column<int>(type: "integer", nullable: false),
                     StatusId = table.Column<int>(type: "integer", nullable: false)
                 },
@@ -89,7 +91,8 @@ namespace TimeTrackerApi.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<int>(type: "integer", nullable: false),
-                    ProjectId = table.Column<string>(type: "text", nullable: false)
+                    ProjectId = table.Column<int>(type: "integer", nullable: false),
+                    Creator = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -115,9 +118,10 @@ namespace TimeTrackerApi.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ActivityId = table.Column<int>(type: "integer", nullable: false),
-                    StartTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    StopTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TotalTime = table.Column<TimeSpan>(type: "interval", nullable: false)
+                    StartTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    StopTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    TotalTime = table.Column<TimeSpan>(type: "interval", nullable: true),
+                    TotalSeconds = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -137,7 +141,7 @@ namespace TimeTrackerApi.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ActivityId = table.Column<int>(type: "integer", nullable: false),
-                    ProjectId = table.Column<string>(type: "text", nullable: false)
+                    ProjectId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -179,12 +183,12 @@ namespace TimeTrackerApi.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_ActivityPeriods_ActivityId",
                 table: "ActivityPeriods",
-                column: "ActId");
+                column: "ActivityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProjectActivities_ActivityId",
                 table: "ProjectActivities",
-                column: "ActId");
+                column: "ActivityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProjectActivities_ProjectId",
@@ -204,8 +208,7 @@ namespace TimeTrackerApi.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Users_ChatId",
                 table: "Users",
-                column: "ChatId",
-                unique: true);
+                column: "ChatId");
         }
 
         /// <inheritdoc />

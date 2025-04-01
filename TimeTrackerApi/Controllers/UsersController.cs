@@ -169,6 +169,6 @@ public class ProjectDto
 {
     public int Id { get; set; }
     public int UserId { get; set; }
-    public string ProjectId { get; set; }
+    public int ProjectId { get; set; }
     public bool Creator { get; set; }
 }

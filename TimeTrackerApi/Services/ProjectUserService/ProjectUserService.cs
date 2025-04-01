@@ -19,15 +19,11 @@ public class ProjectUserService: IProjectUserService
     /// <param name="userId"></param>
     /// <param name="projectId"></param>
     /// <returns></returns>
-    public async Task<ProjectUser> AddProjectUser(int userId, string projectId, bool isCreator)
+    public async Task<ProjectUser> AddProjectUser(int userId, int projectId, bool isCreator)
     {
-        Task<bool> flag1 = CheckProjectIdExistence(projectId); // проверка, что такой проект существует
-        bool isExistInProjects = await flag1;
-
-        Task<bool> flag2 = CheckProjectUser(userId, projectId);  // проверка, что у пользователя нет такого проекта
-        bool isExistInProjectUsers = await flag2;
-
-        if (isExistInProjects && !isExistInProjectUsers)
+        //проверка, что такой проект существует и что у пользователя нет такого проекта
+        bool isExist= await context.ProjectUsers.AnyAsync(p => p.ProjectId == projectId && p.UserId == userId); 
+        if (!isExist)
         {
             var projectUser = new ProjectUser
             {
@@ -43,24 +39,28 @@ public class ProjectUserService: IProjectUserService
     }
 
     /// <summary>
-    /// Проверка сущестования проекта по Id
-    /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    public async Task<bool> CheckProjectIdExistence(string id)
-    {
-        return await context.Projects.AnyAsync(p => p.Id == id);
-    }
-
-    /// <summary>
-    /// Проверка записи на существование в таблице "Пользователи проекта" 
+    /// Подключиться к проекту по коючу доступа
     /// </summary>
     /// <param name="userId"></param>
-    /// <param name="projectId"></param>
+    /// <param name="accessKey"></param>
     /// <returns></returns>
-    public async Task<bool> CheckProjectUser(int userId, string projectId)
+    public async Task<ProjectUser> ConnectToProject(int userId, string accessKey)
     {
-        return await context.ProjectUsers.AnyAsync(p => p.ProjectId == projectId && p.UserId == userId);
+        //проверка, что проект с таким ключом доступа есть
+        var project = await context.Projects.FirstOrDefaultAsync(p => p.AccessKey == accessKey);
+        if (project is not null)
+        {
+            var projectUser = new ProjectUser
+            {
+                UserId = userId,
+                ProjectId = project.Id,
+                Creator = false
+            };
+            await context.ProjectUsers.AddAsync(projectUser);
+            await context.SaveChangesAsync();
+            return projectUser;
+        }
+        else return null;
     }
 
     /// <summary>
@@ -69,7 +69,7 @@ public class ProjectUserService: IProjectUserService
     /// <param name="userId"></param>
     /// <param name="projectId"></param>
     /// <returns></returns>
-    public async Task<bool> DeleteProjectUser(int userId, string projectId)
+    public async Task<bool> DeleteProjectUser(int userId, int projectId)
     {
         var projectUser = await context.ProjectUsers
             .AsNoTracking()
@@ -97,7 +97,7 @@ public class ProjectUserService: IProjectUserService
     /// </summary>
     /// <param name="projectId"></param>
     /// <returns></returns>
-    public async Task<List<ProjectUser>> GetUsersByProjectId(string projectId)
+    public async Task<List<ProjectUser>> GetUsersByProjectId(int projectId)
     {
         var query = context.ProjectUsers.AsQueryable();
         query = query.Where(a => a.ProjectId == projectId);
@@ -110,7 +110,7 @@ public class ProjectUserService: IProjectUserService
     /// <param name="userId"></param>
     /// <param name="projectId"></param>
     /// <returns></returns>
-    public async Task<bool> IsCreator(int userId, string projectId)
+    public async Task<bool> IsCreator(int userId, int projectId)
     {
         return await context.ProjectUsers
             .Where(p => p.ProjectId == projectId && p.UserId == userId)
