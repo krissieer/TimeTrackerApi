@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using TimeTrackerApi.Models;
 using TimeTrackerApi.Services.ActivityService;
+using TimeTrackerApi.Services.ProjectService;
 using TimeTrackerApi.Services.ProjectUserService;
 using TimeTrackerApi.Services.UserService;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -135,6 +136,43 @@ public class UsersController : ControllerBase
 
         return Ok(new { Token = token });
     }
+
+    [HttpPut]
+    [Authorize]
+    public async Task<IActionResult> EditUser([FromBody] EditUserDto dto)
+    {
+        var user = await userService.GetUserById(dto.userId);
+        if (user == null)
+            return NotFound($"User with ID {dto.userId} not found.");
+        bool updated = false;
+        if (dto.updateName && dto.updatePassword)
+            updated = await userService.UpdateUser(dto.userId, dto.userName, dto.password);
+        else if (dto.updateName && !dto.updatePassword)
+            updated = await userService.UpdateUser(dto.userId, dto.userName);
+        else if (!dto.updateName && dto.updatePassword)
+            updated = await userService.UpdateUser(dto.userId, null, dto.password);
+        if (!updated)
+            StatusCode(500, "Failed to edit user due to server error.");
+
+        var result = new UserDto
+        {
+            Id = user.Id,
+            ChatId = user.ChatId,
+            Name = user.Name
+        };
+        return Ok(result);
+
+    }
+
+    [HttpDelete("{userId}")]
+    [Authorize]
+    public async Task<ActionResult> DeleteUser(int userId)
+    {
+        var success = await userService.DeleteUser(userId);
+        if (!success)
+            StatusCode(500, "Failed to delete user due to server error.");
+        return NoContent();
+    }
 }
 
 public class AuthRequestDto
@@ -171,4 +209,14 @@ public class ProjectDto
     public int UserId { get; set; }
     public int ProjectId { get; set; }
     public bool Creator { get; set; }
+}
+
+public class EditUserDto
+{
+    public int userId { get; set; }
+    public bool updateName { get; set; }
+    public bool updatePassword { get; set; }
+    public string? userName { get; set; } = string.Empty;
+    [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
+    public string? password { get; set; } = string.Empty;
 }

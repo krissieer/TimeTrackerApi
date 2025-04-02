@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Xml.Linq;
 using TimeTrackerApi.Models;
 using TimeTrackerApi.Token;
 namespace TimeTrackerApi.Services.UserService;
@@ -13,6 +14,15 @@ public class UserService:IUserService
     }
 
     /// <summary>
+    /// Получть список пользователй
+    /// </summary>
+    /// <returns></returns>
+    public async Task<List<User>> GetUsers()
+    {
+        return await context.Users.ToListAsync();
+    }
+
+    /// <summary>
     /// Проверка имени на существование
     /// </summary>
     /// <param name="name"></param>
@@ -22,9 +32,17 @@ public class UserService:IUserService
         return await context.Users.AnyAsync(u => u.Name.Equals(name));
     }
 
-    public async Task<List<User>> GetUsers()
+    /// <summary>
+    /// Получить пользователя по его ID
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    public async Task<User> GetUserById(int id)
     {
-        return await context.Users.ToListAsync();
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        if (user == null)
+            return null;
+        return user;
     }
 
     /// <summary>
@@ -84,6 +102,37 @@ public class UserService:IUserService
         {
             throw new Exception($"Login error: {ex.Message}");
         }
-       
+    }
+
+    public async Task<bool> UpdateUser(int userId, string? newName = null, string? newPassword = null)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+            throw new KeyNotFoundException($"User with ID {userId} not found.");
+        if (newName is not null)
+        {
+            bool isExist = await CheckUserNameExistence(newName);
+            if (!isExist)
+            {
+                user.Name = newName;
+            }
+        }
+        if (newPassword is not null)
+        {
+            var hashedPassword = PasswordHasher.HashPassword(newPassword);
+            user.PasswordHash = hashedPassword;
+        }
+        return await context.SaveChangesAsync() >= 1;
+    }
+
+    public async Task<bool> DeleteUser(int id)
+    {
+        var user = await context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id);
+        if (user == null)
+            throw new KeyNotFoundException($"User with ID {id} not found.");
+        context.Users.Remove(user);
+        return await context.SaveChangesAsync() >= 1;
     }
 }

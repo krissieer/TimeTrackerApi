@@ -65,13 +65,9 @@ public class ProjectUsersController : ControllerBase
     /// <returns></returns>
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> AddProjectUser([FromBody] ProjectUserDto dto)
+    public async Task<IActionResult> AddProjectUser([FromBody] AddProjectUserDto dto)
     {
-        ProjectUser user = null;
-        if (string.IsNullOrEmpty(dto.accessKey))
-            user = await projectUserService.AddProjectUser(dto.userId, dto.projectId, dto.isCreator);
-        else
-            user = await projectUserService.ConnectToProject(dto.userId, dto.accessKey);
+        var user = await projectUserService.AddProjectUser(dto.userId, dto.projectId, dto.isCreator);
         if (user == null)
         {
             return Conflict("Project does not exist or the user is already assigned to this project.");
@@ -86,6 +82,32 @@ public class ProjectUsersController : ControllerBase
     }
 
     /// <summary>
+    /// Подключиться к проекту
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="projectId"></param>
+    /// <param name="isCreator"></param>
+    /// <returns></returns>
+    [HttpPost("connect")]
+    [Authorize]
+    public async Task<IActionResult> ConnectToProject([FromBody] ConnectToProjectDto dto)
+    {
+        var user = await projectUserService.ConnectToProject(dto.userId, dto.accessKey);
+        if (user == null)
+        {
+            return Conflict("Project does not exist or the user is already assigned to this project.");
+        }
+        return Ok(new ProjectUserDto
+        {
+            id = user.Id,
+            userId = user.UserId,
+            projectId = user.ProjectId,
+            isCreator = user.Creator,
+        });
+    }
+
+
+    /// <summary>
     /// Удалить пользователя из проекта
     /// </summary>
     /// <param name="userId"></param>
@@ -93,7 +115,7 @@ public class ProjectUsersController : ControllerBase
     /// <returns></returns>
     [HttpDelete("{projectId}/{userId}")]
     [Authorize]
-    public async Task<ActionResult<bool>> DeleteProjectUser(int projectId, int userId)
+    public async Task<IActionResult> DeleteProjectUser(int projectId, int userId)
     {
         var success = await projectUserService.DeleteProjectUser(userId, projectId);
         if (!success)
@@ -108,5 +130,17 @@ public class ProjectUserDto
     public int userId { get; set; }
     public int projectId { get; set; }
     public bool isCreator { get; set; }
-    public string accessKey { get; set; } = string.Empty;
+}
+
+public class AddProjectUserDto
+{
+    public int userId { get; set; }
+    public int projectId { get; set; }
+    public bool isCreator { get; set; }
+}
+
+public class ConnectToProjectDto
+{
+    public int userId { get; set; }
+    public string accessKey { get; set; }
 }
