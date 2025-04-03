@@ -41,9 +41,9 @@ public class UsersController : ControllerBase
         }
         var result = users.Select(a => new UserDto
         {
-            Id = a.Id,
-            ChatId = a.ChatId,
-            Name = a.Name
+            id = a.Id,
+            chatId = a.ChatId,
+            name = a.Name
         });
 
         return Ok(result);
@@ -71,11 +71,11 @@ public class UsersController : ControllerBase
         }
         var result = activities.Select(a => new ActivityDto
         {
-            Id = a.Id,
-            Name = a.Name,
-            ActiveFrom = a.ActiveFrom,
-            UserId = a.UserId,
-            StatusId = a.StatusId
+            id = a.Id,
+            name = a.Name,
+            activeFrom = a.ActiveFrom,
+            userId = a.UserId,
+            statusId = a.StatusId
         });
 
         return Ok(result);
@@ -97,10 +97,10 @@ public class UsersController : ControllerBase
         }
         var result = projects.Select(a => new ProjectDto
         {
-            Id = a.Id,
-            UserId = a.UserId,
-            ProjectId = a.ProjectId,
-            Creator = a.Creator
+            id = a.Id,
+            userId = a.UserId,
+            projectId = a.ProjectId,
+            creator = a.Creator
         });
 
         return Ok(result);
@@ -121,15 +121,15 @@ public class UsersController : ControllerBase
 
         string token;
 
-        if ( dto.IsNewUser )
+        if ( dto.isNewUser )
         {
-            token = await userService.Registration(dto.Name, dto.Password, dto.ChatId);
+            token = await userService.Registration(dto.name, dto.password, dto.chatId);
             if (string.IsNullOrEmpty(token))
                 return Conflict("This username is already in use");
         }
         else
         {
-            token = await userService.Login(dto.Name, dto.Password);
+            token = await userService.Login(dto.name, dto.password);
             if (string.IsNullOrEmpty(token))
                 return Unauthorized("Username or password is wrong");
         }
@@ -156,9 +156,9 @@ public class UsersController : ControllerBase
 
         var result = new UserDto
         {
-            Id = user.Id,
-            ChatId = user.ChatId,
-            Name = user.Name
+            id = user.Id,
+            chatId = user.ChatId,
+            name = user.Name
         };
         return Ok(result);
 
@@ -178,37 +178,37 @@ public class UsersController : ControllerBase
 public class AuthRequestDto
 {
     [Required]
-    public bool IsNewUser { get; set; }
+    public bool isNewUser { get; set; }
     [Required]
-    public string Name { get; set; } = string.Empty;
+    public string name { get; set; } = string.Empty;
     [Required]
     [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
-    public string Password { get; set; } = string.Empty;
-    public int ChatId { get; set; } = 0;
+    public string password { get; set; } = string.Empty;
+    public int chatId { get; set; } = 0;
 }
 
 public class UserDto
 {
-    public int Id { get; set; }
-    public long ChatId { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public int id { get; set; }
+    public long chatId { get; set; }
+    public string name { get; set; } = string.Empty;
 }
 
 public class ActivityDto
 {
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public DateTime ActiveFrom { get; set; }
-    public int UserId { get; set; }
-    public int StatusId { get; set; }
+    public int id { get; set; }
+    public string name { get; set; }
+    public DateTime activeFrom { get; set; }
+    public int userId { get; set; }
+    public int statusId { get; set; }
 }
 
 public class ProjectDto
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
-    public int ProjectId { get; set; }
-    public bool Creator { get; set; }
+    public int id { get; set; }
+    public int userId { get; set; }
+    public int projectId { get; set; }
+    public bool creator { get; set; }
 }
 
 public class EditUserDto

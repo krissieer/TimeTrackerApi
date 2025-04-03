@@ -77,7 +77,15 @@ public class Program
                 };
             });
 
-       
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.WithOrigins("https://localhost:5173");
+                policy.AllowAnyHeader();
+                policy.AllowAnyMethod();
+            });
+        });
 
         var app = builder.Build();
         
@@ -95,6 +103,8 @@ public class Program
         //    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
         //    c.RoutePrefix = string.Empty;
         //});
+
+        app.UseCors();
 
         app.UseHttpsRedirection();
         app.MapControllers();

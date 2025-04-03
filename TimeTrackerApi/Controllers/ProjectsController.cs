@@ -40,9 +40,9 @@ namespace TimeTrackerApi.Controllers
 
             var result = projects.Select(a => new ProjectRequest
             {
-                ProjectId = a.Id,
-                ProjectName = a.Name,
-                ProjectKey = a.AccessKey
+                projectId = a.Id,
+                projectName = a.Name,
+                projectKey = a.AccessKey
             });
 
             return Ok(result);
@@ -101,9 +101,9 @@ namespace TimeTrackerApi.Controllers
             }
             var result = new ProjectRequest
             {
-                ProjectId = project.Id,
-                ProjectName = project.Name,
-                ProjectKey = project.AccessKey
+                projectId = project.Id,
+                projectName = project.Name,
+                projectKey = project.AccessKey
             };
             return Ok(result);
         }
@@ -137,9 +137,9 @@ namespace TimeTrackerApi.Controllers
 
 public class ProjectRequest
 {
-    public int ProjectId { get; set; }
-    public string ProjectName { get; set; }
-    public string ProjectKey { get; set; }
+    public int projectId { get; set; }
+    public string projectName { get; set; }
+    public string projectKey { get; set; }
 }
 
 public class AddProjectDto

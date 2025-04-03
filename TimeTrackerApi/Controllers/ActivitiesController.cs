@@ -74,7 +74,7 @@ public class ActivitiesController : ControllerBase
     [Authorize]
     public async Task<ActionResult<bool>> AddActivitiesAsync([FromBody] AddActivityRequest dto)
     {
-        bool result = await activityService.AddActivity(dto.UserId, dto.ActivityName);
+        bool result = await activityService.AddActivity(dto.userId, dto.activityName);
 
         if (!result)
             return Conflict("Activity with the same activity name already exists");
@@ -106,29 +106,29 @@ public class ActivitiesController : ControllerBase
     [Authorize]
     public async Task<ActionResult<bool>> UpdateActivityAsynс([FromBody] UpdateActivityDto dto)
     {
-        if (dto.UpdateName && string.IsNullOrWhiteSpace(dto.NewName))
+        if (dto.updateName && string.IsNullOrWhiteSpace(dto.newName))
         {
             return BadRequest("New name must be provided when updating the name.");
         }
 
-        var activity = await activityService.GetActivityById(dto.ActivityId);
+        var activity = await activityService.GetActivityById(dto.activityId);
         if (activity == null)
         {
-            return NotFound($"Activity with ID {dto.ActivityId} not found.");
+            return NotFound($"Activity with ID {dto.activityId} not found.");
         }
 
         bool result = false;
-        if (dto.UpdateName)
+        if (dto.updateName)
         {
-            result = await activityService.UpdateActivityName(dto.ActivityId, dto.NewName);
+            result = await activityService.UpdateActivityName(dto.activityId, dto.newName);
         }
-        if (activity.StatusId != 3 && dto.Archived)
+        if (activity.StatusId != 3 && dto.archived)
         {
-            result = await activityService.ChangeStatus(dto.ActivityId, 3);
+            result = await activityService.ChangeStatus(dto.activityId, 3);
         }
-        if (activity.StatusId != 1 && !dto.Archived)
+        if (activity.StatusId != 1 && !dto.archived)
         {
-            result = await activityService.ChangeStatus(dto.ActivityId, 1);
+            result = await activityService.ChangeStatus(dto.activityId, 1);
         }
 
         if (!result)
@@ -161,13 +161,13 @@ public class ActivitiesController : ControllerBase
 
 public class UpdateActivityDto
 {
-    public int ActivityId { get; set; }
-    public bool UpdateName { get; set; }
-    public bool Archived { get; set; }
-    public string? NewName { get; set; }
+    public int activityId { get; set; }
+    public bool updateName { get; set; }
+    public bool archived { get; set; }
+    public string? newName { get; set; }
 }
 public class AddActivityRequest
 {
-    public int UserId { get; set; }
-    public string ActivityName { get; set; } = string.Empty;
+    public int userId { get; set; }
+    public string activityName { get; set; } = string.Empty;
 }

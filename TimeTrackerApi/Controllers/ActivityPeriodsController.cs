@@ -82,21 +82,21 @@ public class ActivityPeriodsController : ControllerBase
     [Authorize]
     public async Task<ActionResult<ActivityPeriod>> StartStopTracking([FromBody] StartStopTrackingDto dto)
     {
-        var activityExists = await activityService.GetActivityById(dto.ActivityId);
+        var activityExists = await activityService.GetActivityById(dto.activityId);
         if (activityExists == null)
         {
-            return NotFound($"Activity with ID {dto.ActivityId} not found.");
+            return NotFound($"Activity with ID {dto.activityId} not found.");
         }
 
         TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
-        var actPeriod = dto.IsStarted
-           ? await activityPeriodService.StartTracking(dto.ActivityId)
-           : await activityPeriodService.StopTracking(dto.ActivityId);
+        var actPeriod = dto.isStarted
+           ? await activityPeriodService.StartTracking(dto.activityId)
+           : await activityPeriodService.StopTracking(dto.activityId);
 
         if (actPeriod is null)
         {
-            return BadRequest(dto.IsStarted ? "Failed to start tracking." : "Failed to stop tracking.");
+            return BadRequest(dto.isStarted ? "Failed to start tracking." : "Failed to stop tracking.");
         }
 
         var startTime = DateTime.SpecifyKind(actPeriod.StartTime, DateTimeKind.Utc);
@@ -106,12 +106,12 @@ public class ActivityPeriodsController : ControllerBase
 
         var response = new ActivityPeriodDto
         {
-            ActivityPeriodId = actPeriod.Id,
-            ActId = actPeriod.ActivityId,
-            Starttime = TimeZoneInfo.ConvertTimeFromUtc(startTime, tz),
-            Stoptime = stopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(stopTime.Value, tz) : null,
-            Totaltime = actPeriod.TotalTime,
-            Totalseconds = actPeriod.TotalSeconds,
+            activityPeriodId = actPeriod.Id,
+            activityId = actPeriod.ActivityId,
+            startTime = TimeZoneInfo.ConvertTimeFromUtc(startTime, tz),
+            stopTime = stopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(stopTime.Value, tz) : null,
+            totalTime = actPeriod.TotalTime,
+            totalSeconds = actPeriod.TotalSeconds,
         };
         return Ok(response);
     }
@@ -120,20 +120,20 @@ public class ActivityPeriodsController : ControllerBase
     [Authorize]
     public async Task<ActionResult<bool>> UpdateTimeAsynс([FromBody] UpdatePeriod dto)
     {
-        if (!dto.NewStartTime.HasValue && !dto.NewStopTime.HasValue)
+        if (!dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
             return BadRequest("At least one of newStartTime or newStopTime must has value.");
 
-        var activityPeriod = await activityPeriodService.GetActivityPeriodById(dto.ActivityPeriodId);
+        var activityPeriod = await activityPeriodService.GetActivityPeriodById(dto.activityPeriodId);
         if (activityPeriod is null)
-            return NotFound($"ActivityPeriod with ID {dto.ActivityPeriodId} not found.");
+            return NotFound($"ActivityPeriod with ID {dto.activityPeriodId} not found.");
 
         ActivityPeriod? result = null;
 
-        if (dto.NewStartTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(dto.ActivityPeriodId, dto.NewStartTime);
+        if (dto.newStartTime.HasValue)
+            result = await activityPeriodService.UpdateActivityPeriod(dto.activityPeriodId, dto.newStartTime);
 
-        if (dto.NewStopTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(dto.ActivityPeriodId, null, dto.NewStopTime);
+        if (dto.newStopTime.HasValue)
+            result = await activityPeriodService.UpdateActivityPeriod(dto.activityPeriodId, null, dto.newStopTime);
 
         if (result is null)
             return BadRequest("Failed to update activity period.");
@@ -146,12 +146,12 @@ public class ActivityPeriodsController : ControllerBase
 
         return Ok(new ActivityPeriodDto
         {
-            ActivityPeriodId = result.Id,
-            ActId = result.ActivityId,
-            Starttime = TimeZoneInfo.ConvertTimeFromUtc(startTime, tz),
-            Stoptime = stopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(stopTime.Value, tz) : null,
-            Totaltime = result.TotalTime,
-            Totalseconds = result.TotalSeconds,
+            activityPeriodId = result.Id,
+            activityId = result.ActivityId,
+            startTime = TimeZoneInfo.ConvertTimeFromUtc(startTime, tz),
+            stopTime = stopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(stopTime.Value, tz) : null,
+            totalTime = result.TotalTime,
+            totalSeconds = result.TotalSeconds,
         });
     }
 
@@ -172,25 +172,25 @@ public class ActivityPeriodsController : ControllerBase
 
 public class StartStopTrackingDto
 {
-    public int ActivityId { get; set; }
-    public bool IsStarted { get; set; }
+    public int activityId { get; set; }
+    public bool isStarted { get; set; }
 }
 
 public class UpdatePeriod
 {
-    public int ActivityPeriodId { get; set; }
+    public int activityPeriodId { get; set; }
     [JsonConverter(typeof(DateTimeConverter))]
-    public DateTime? NewStartTime { get; set; } = null;
+    public DateTime? newStartTime { get; set; } = null;
     [JsonConverter(typeof(DateTimeConverter))]
-    public DateTime? NewStopTime { get; set; } = null;
+    public DateTime? newStopTime { get; set; } = null;
 }
 
 public class ActivityPeriodDto
 {
-    public int ActivityPeriodId { get; set; }
-    public int ActId { get; set; }
-    public DateTime? Starttime { get; set; } = null;
-    public DateTime? Stoptime { get; set; } = null;
-    public TimeSpan? Totaltime { get; set; } = null;
-    public long? Totalseconds { get; set; } = 0;
+    public int activityPeriodId { get; set; }
+    public int activityId { get; set; }
+    public DateTime? startTime { get; set; } = null;
+    public DateTime? stopTime { get; set; } = null;
+    public TimeSpan? totalTime { get; set; } = null;
+    public long? totalSeconds { get; set; } = 0;
 }

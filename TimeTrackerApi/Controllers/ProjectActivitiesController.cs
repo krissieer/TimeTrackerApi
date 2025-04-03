@@ -39,9 +39,9 @@ public class ProjectActivitiesController : ControllerBase
         }
         var result = activities.Select(a => new ProjectActivityDto
         {
-            Id = a.Id,
-            ActivityId = a.ActivityId,
-            ProjectId = a.ProjectId
+            id = a.Id,
+            activityId = a.ActivityId,
+            projectId = a.ProjectId
         });
         return Ok(result);
     }
@@ -71,9 +71,9 @@ public class ProjectActivitiesController : ControllerBase
 
         var response = new ProjectActivityDto
         {
-            Id = result.Id,
-            ActivityId = result.ActivityId,
-            ProjectId = result.ProjectId
+            id = result.Id,
+            activityId = result.ActivityId,
+            projectId = result.ProjectId
         };
         return Ok(response);
     }
@@ -101,7 +101,7 @@ public class ProjectActivitiesController : ControllerBase
 
 public class ProjectActivityDto
 {
-    public int Id { get; set; }
-    public int ActivityId { get; set; }
-    public int ProjectId { get; set; }
+    public int id { get; set; }
+    public int activityId { get; set; }
+    public int projectId { get; set; }
 }
