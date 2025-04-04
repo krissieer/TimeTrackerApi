@@ -49,6 +49,29 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
+
+    /// <summary>
+    /// Получить данные об одном пользователе
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("{userId}")]
+    public async Task<ActionResult<User>> GetUserById(int userId)
+    {
+        var user = await userService.GetUserById(userId);
+        if (user is null)
+        {
+            return NotFound($"User with ID {userId} not found.");
+        }
+        var result = new UserDto
+        {
+            id = user.Id,
+            chatId = user.ChatId,
+            name = user.Name
+        };
+
+        return Ok(result);
+    }
+
     /// <summary>
     /// Получить активности пользователя
     /// </summary>
@@ -137,20 +160,50 @@ public class UsersController : ControllerBase
         return Ok(new { Token = token });
     }
 
-    [HttpPut]
+    /// <summary>
+    /// Подключиться к проекту
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="projectId"></param>
+    /// <param name="isCreator"></param>
+    /// <returns></returns>
+    [HttpPost("project")]
     [Authorize]
-    public async Task<IActionResult> EditUser([FromBody] EditUserDto dto)
+    public async Task<IActionResult> ConnectToProject([FromBody] ConnectToProjectDto dto)
     {
-        var user = await userService.GetUserById(dto.userId);
+        var USER = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(USER))
+            return Unauthorized("User not authenticated.");
+        int user_Id = int.Parse(USER);
+
+        var user = await projectUserService.ConnectToProject(user_Id, dto.accessKey);
         if (user == null)
-            return NotFound($"User with ID {dto.userId} not found.");
+        {
+            return Conflict("Project does not exist or the user is already assigned to this project.");
+        }
+        return Ok(new ProjectUserDto
+        {
+            id = user.Id,
+            userId = user.UserId,
+            projectId = user.ProjectId,
+            isCreator = user.Creator,
+        });
+    }
+
+    [HttpPut("{userId}")]
+    [Authorize]
+    public async Task<IActionResult> EditUser([FromBody] EditUserDto dto, int userId)
+    {
+        var user = await userService.GetUserById(userId);
+        if (user == null)
+            return NotFound($"User with ID {userId} not found.");
         bool updated = false;
         if (dto.updateName && dto.updatePassword)
-            updated = await userService.UpdateUser(dto.userId, dto.userName, dto.password);
+            updated = await userService.UpdateUser(userId, dto.userName, dto.password);
         else if (dto.updateName && !dto.updatePassword)
-            updated = await userService.UpdateUser(dto.userId, dto.userName);
+            updated = await userService.UpdateUser(userId, dto.userName);
         else if (!dto.updateName && dto.updatePassword)
-            updated = await userService.UpdateUser(dto.userId, null, dto.password);
+            updated = await userService.UpdateUser(userId, null, dto.password);
         if (!updated)
             StatusCode(500, "Failed to edit user due to server error.");
 
@@ -213,10 +266,14 @@ public class ProjectDto
 
 public class EditUserDto
 {
-    public int userId { get; set; }
     public bool updateName { get; set; }
     public bool updatePassword { get; set; }
     public string? userName { get; set; } = string.Empty;
     [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
     public string? password { get; set; } = string.Empty;
+}
+
+public class ConnectToProjectDto
+{
+    public string accessKey { get; set; }
 }

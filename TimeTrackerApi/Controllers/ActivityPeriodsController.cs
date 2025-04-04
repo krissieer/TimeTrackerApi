@@ -116,24 +116,24 @@ public class ActivityPeriodsController : ControllerBase
         return Ok(response);
     }
 
-    [HttpPut]
+    [HttpPut("{activityPeriodId}")]
     [Authorize]
-    public async Task<ActionResult<bool>> UpdateTimeAsynс([FromBody] UpdatePeriod dto)
+    public async Task<ActionResult<bool>> UpdateTimeAsynс([FromBody] UpdatePeriod dto, int activityPeriodId)
     {
         if (!dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
             return BadRequest("At least one of newStartTime or newStopTime must has value.");
 
-        var activityPeriod = await activityPeriodService.GetActivityPeriodById(dto.activityPeriodId);
+        var activityPeriod = await activityPeriodService.GetActivityPeriodById(activityPeriodId);
         if (activityPeriod is null)
-            return NotFound($"ActivityPeriod with ID {dto.activityPeriodId} not found.");
+            return NotFound($"ActivityPeriod with ID {activityPeriodId} not found.");
 
         ActivityPeriod? result = null;
 
         if (dto.newStartTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(dto.activityPeriodId, dto.newStartTime);
+            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, dto.newStartTime);
 
         if (dto.newStopTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(dto.activityPeriodId, null, dto.newStopTime);
+            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, null, dto.newStopTime);
 
         if (result is null)
             return BadRequest("Failed to update activity period.");
@@ -178,7 +178,6 @@ public class StartStopTrackingDto
 
 public class UpdatePeriod
 {
-    public int activityPeriodId { get; set; }
     [JsonConverter(typeof(DateTimeConverter))]
     public DateTime? newStartTime { get; set; } = null;
     [JsonConverter(typeof(DateTimeConverter))]

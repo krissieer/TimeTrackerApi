@@ -43,20 +43,6 @@ public class ProjectUsersController : ControllerBase
     }
 
     /// <summary>
-    /// Является ли пользователь создателем проекта
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="projectId"></param>
-    /// <returns></returns>
-    [HttpGet("{projectId}/{userId}/role")]
-    [Authorize]
-    public async Task<ActionResult<bool>> GetIsCreator(int userId, int projectId)
-    {
-        var result = await projectUserService.IsCreator(userId, projectId);
-        return Ok(result);
-    }
-
-    /// <summary>
     /// Добавить поьзователя в проект
     /// </summary>
     /// <param name="userId"></param>
@@ -67,7 +53,7 @@ public class ProjectUsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> AddProjectUser([FromBody] AddProjectUserDto dto)
     {
-        var user = await projectUserService.AddProjectUser(dto.userId, dto.projectId, dto.isCreator);
+        var user = await projectUserService.AddProjectUser(dto.userId, dto.projectId, false);
         if (user == null)
         {
             return Conflict("Project does not exist or the user is already assigned to this project.");
@@ -77,35 +63,8 @@ public class ProjectUsersController : ControllerBase
             id = user.Id,
             userId = user.UserId,
             projectId = user.ProjectId,
-            isCreator = user.Creator,
         });
     }
-
-    /// <summary>
-    /// Подключиться к проекту
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="projectId"></param>
-    /// <param name="isCreator"></param>
-    /// <returns></returns>
-    [HttpPost("connect")]
-    [Authorize]
-    public async Task<IActionResult> ConnectToProject([FromBody] ConnectToProjectDto dto)
-    {
-        var user = await projectUserService.ConnectToProject(dto.userId, dto.accessKey);
-        if (user == null)
-        {
-            return Conflict("Project does not exist or the user is already assigned to this project.");
-        }
-        return Ok(new ProjectUserDto
-        {
-            id = user.Id,
-            userId = user.UserId,
-            projectId = user.ProjectId,
-            isCreator = user.Creator,
-        });
-    }
-
 
     /// <summary>
     /// Удалить пользователя из проекта
@@ -136,11 +95,4 @@ public class AddProjectUserDto
 {
     public int userId { get; set; }
     public int projectId { get; set; }
-    public bool isCreator { get; set; }
-}
-
-public class ConnectToProjectDto
-{
-    public int userId { get; set; }
-    public string accessKey { get; set; }
 }

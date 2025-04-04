@@ -49,6 +49,29 @@ namespace TimeTrackerApi.Controllers
         }
 
         /// <summary>
+        /// Получить данные по проекту
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("{projectId}")]
+        [Authorize]
+        public async Task<IActionResult> GetProjectById(int projectId)
+        {
+            var project = await projectService.GetProjectById(projectId);
+
+            if (project is null)
+                return NotFound($"Project with ID {projectId} not found.");
+
+            var result = new ProjectRequest
+            {
+                projectId = project.Id,
+                projectName = project.Name,
+                projectKey = project.AccessKey
+            };
+
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Добавить проект
         /// </summary>
         /// <param name="dto"></param>
@@ -81,23 +104,23 @@ namespace TimeTrackerApi.Controllers
         /// </summary>
         /// <param name="dto"></param>
         /// <returns></returns>
-        [HttpPut]
+        [HttpPut("{projectId}")]
         [Authorize]
-        public async Task<IActionResult> UpdateProject([FromBody] UpdateProjectDto dto)
+        public async Task<IActionResult> UpdateProject([FromBody] UpdateProjectDto dto, int projectId)
         {
             var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userID))
                 return Unauthorized("User not authenticated.");
             int userId = int.Parse(userID);
 
-            var isCreator = await projectUserService.IsCreator(userId, dto.projectId);
+            var isCreator = await projectUserService.IsCreator(userId, projectId);
             if (!isCreator)
                 return Conflict("You don't have access to edit this project");
 
-            var project = await projectService.UpdateProject(dto.projectId, dto.projectName);
+            var project = await projectService.UpdateProject(projectId, dto.projectName);
             if (project == null)
             {
-                return NotFound($"Project with ID {dto.projectId} not found.");
+                return NotFound($"Project with ID {projectId} not found.");
             }
             var result = new ProjectRequest
             {
@@ -149,6 +172,5 @@ public class AddProjectDto
 
 public class UpdateProjectDto
 {
-    public int projectId { get; set; }
     public string projectName { get; set; }
 }

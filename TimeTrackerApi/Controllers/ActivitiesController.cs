@@ -23,21 +23,6 @@ public class ActivitiesController : ControllerBase
     }
 
     /// <summary>
-    /// Получить статус активности
-    /// </summary>
-    /// <param name="activityId"></param>
-    /// <returns></returns>
-    [HttpGet("{activityId}/status")]
-    [Authorize]
-    public async Task<IActionResult> GetStatusAsync(int activityId)
-    {
-        var status = await activityService.GetStatusById(activityId);
-        if (status == 0)
-            return NotFound($"Activity with ID {activityId} not found");
-        return Ok(status);
-    }
-
-    /// <summary>
     /// Получить проекты, в которые включена активность
     /// </summary>
     /// <param name="activityId"></param>
@@ -62,6 +47,31 @@ public class ActivitiesController : ControllerBase
             a.ProjectId,
             a.ActivityId
         });
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Получить проекты, в которые включена активность
+    /// </summary>
+    /// <param name="activityId"></param>
+    /// <returns></returns>
+    [HttpGet("{activityId}")]
+    [Authorize]
+    public async Task<IActionResult> GetActivityById(int activityId)
+    {
+        var activity = await activityService.GetActivityById(activityId);
+        if (activity == null)
+        {
+            return NotFound($"Activity with ID {activityId} not found.");
+        }
+        var result =  new ActivityDto
+        {
+            id = activity.Id,
+            name = activity.Name,
+            userId = activity.UserId,
+            activeFrom = activity.ActiveFrom,
+            statusId = activity.StatusId
+        };
         return Ok(result);
     }
 
@@ -102,33 +112,33 @@ public class ActivitiesController : ControllerBase
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    [HttpPut]
+    [HttpPut("{activityId}")]
     [Authorize]
-    public async Task<ActionResult<bool>> UpdateActivityAsynс([FromBody] UpdateActivityDto dto)
+    public async Task<ActionResult<bool>> UpdateActivityAsynс([FromBody] UpdateActivityDto dto, int activityId)
     {
         if (dto.updateName && string.IsNullOrWhiteSpace(dto.newName))
         {
             return BadRequest("New name must be provided when updating the name.");
         }
 
-        var activity = await activityService.GetActivityById(dto.activityId);
+        var activity = await activityService.GetActivityById(activityId);
         if (activity == null)
         {
-            return NotFound($"Activity with ID {dto.activityId} not found.");
+            return NotFound($"Activity with ID {activityId} not found.");
         }
 
         bool result = false;
         if (dto.updateName)
         {
-            result = await activityService.UpdateActivityName(dto.activityId, dto.newName);
+            result = await activityService.UpdateActivityName(activityId, dto.newName);
         }
         if (activity.StatusId != 3 && dto.archived)
         {
-            result = await activityService.ChangeStatus(dto.activityId, 3);
+            result = await activityService.ChangeStatus(activityId, 3);
         }
         if (activity.StatusId != 1 && !dto.archived)
         {
-            result = await activityService.ChangeStatus(dto.activityId, 1);
+            result = await activityService.ChangeStatus(activityId, 1);
         }
 
         if (!result)
@@ -161,7 +171,6 @@ public class ActivitiesController : ControllerBase
 
 public class UpdateActivityDto
 {
-    public int activityId { get; set; }
     public bool updateName { get; set; }
     public bool archived { get; set; }
     public string? newName { get; set; }
