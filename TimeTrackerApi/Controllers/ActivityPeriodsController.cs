@@ -61,7 +61,7 @@ public class ActivityPeriodsController : ControllerBase
         {
             a.Id,
             a.ActivityId,
-            StartTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(a.StartTime, DateTimeKind.Utc), tz),
+            StartTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(a.StartTime, DateTimeKind.Utc), tz).ToString("yyyy-MM-dd HH:mm:ss"),
             StopTime = a.StopTime.HasValue
                ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(a.StopTime.Value, DateTimeKind.Utc), tz)
                : (DateTime?)null,
@@ -87,35 +87,38 @@ public class ActivityPeriodsController : ControllerBase
         {
             return NotFound($"Activity with ID {dto.activityId} not found.");
         }
-
         TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
-        var actPeriod = dto.isStarted
-           ? await activityPeriodService.StartTracking(dto.activityId)
-           : await activityPeriodService.StopTracking(dto.activityId);
+        List<ActivityPeriod> actPeriod = dto.isStarted
+            ? new List<ActivityPeriod> { await activityPeriodService.StartTracking(dto.activityId) }
+            : await activityPeriodService.StopTracking(dto.activityId);
 
-        if (actPeriod is null)
+        if (actPeriod is null || !actPeriod.Any())
         {
             return BadRequest(dto.isStarted ? "Failed to start tracking." : "Failed to stop tracking.");
         }
 
-        var startTime = DateTime.SpecifyKind(actPeriod.StartTime, DateTimeKind.Utc);
-        var stopTime = actPeriod.StopTime.HasValue
-            ? DateTime.SpecifyKind(actPeriod.StopTime.Value, DateTimeKind.Utc)
-            : (DateTime?)null;
-
-        var response = new ActivityPeriodDto
+        var response = actPeriod.Select(actPeriod => new ActivityPeriodDto
         {
             activityPeriodId = actPeriod.Id,
             activityId = actPeriod.ActivityId,
-            startTime = TimeZoneInfo.ConvertTimeFromUtc(startTime, tz),
-            stopTime = stopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(stopTime.Value, tz) : null,
+            startTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(actPeriod.StartTime, DateTimeKind.Utc), tz),
+            stopTime = actPeriod.StopTime.HasValue
+                    ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(actPeriod.StopTime.Value, DateTimeKind.Utc), tz)
+                    : (DateTime?)null,
             totalTime = actPeriod.TotalTime,
             totalSeconds = actPeriod.TotalSeconds,
-        };
+        }).ToList();
+
         return Ok(response);
     }
 
+    /// <summary>
+    /// Обновить время в записи отслеживания
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <param name="activityPeriodId"></param>
+    /// <returns></returns>
     [HttpPut("{activityPeriodId}")]
     [Authorize]
     public async Task<ActionResult<bool>> UpdateTimeAsynс([FromBody] UpdatePeriod dto, int activityPeriodId)
@@ -127,34 +130,39 @@ public class ActivityPeriodsController : ControllerBase
         if (activityPeriod is null)
             return NotFound($"ActivityPeriod with ID {activityPeriodId} not found.");
 
-        ActivityPeriod? result = null;
+        List<ActivityPeriod>? result = null;
 
-        if (dto.newStartTime.HasValue)
+        if (dto.newStartTime.HasValue && dto.newStopTime.HasValue)
+            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, dto.newStartTime, dto.newStopTime);
+
+        else if (dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
             result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, dto.newStartTime);
 
-        if (dto.newStopTime.HasValue)
+        else if (dto.newStopTime.HasValue && !dto.newStartTime.HasValue)
             result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, null, dto.newStopTime);
 
         if (result is null)
             return BadRequest("Failed to update activity period.");
 
         TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
-        var startTime = DateTime.SpecifyKind(result.StartTime, DateTimeKind.Utc);
-        var stopTime = result.StopTime.HasValue
-            ? DateTime.SpecifyKind(result.StopTime.Value, DateTimeKind.Utc)
-            : (DateTime?)null;
-
-        return Ok(new ActivityPeriodDto
+        var resultDto = result.Select(period => new ActivityPeriodDto
         {
-            activityPeriodId = result.Id,
-            activityId = result.ActivityId,
-            startTime = TimeZoneInfo.ConvertTimeFromUtc(startTime, tz),
-            stopTime = stopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(stopTime.Value, tz) : null,
-            totalTime = result.TotalTime,
-            totalSeconds = result.TotalSeconds,
-        });
+            activityPeriodId = period.Id,
+            activityId = period.ActivityId,
+            startTime = TimeZoneInfo.ConvertTimeFromUtc(period.StartTime, tz),
+            stopTime = period.StopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(period.StopTime.Value, tz) : null,
+            totalTime = period.TotalTime,
+            totalSeconds = period.TotalSeconds,
+        }).ToList();
+
+        return Ok(resultDto);
     }
 
+    /// <summary>
+    /// Удалить запись отслеживания
+    /// </summary>
+    /// <param name="activityPeriodId"></param>
+    /// <returns></returns>
     [HttpDelete("{activityPeriodId}")]
     [Authorize]
     public async Task<ActionResult> DeleteActivityPeriodAsync(int activityPeriodId)

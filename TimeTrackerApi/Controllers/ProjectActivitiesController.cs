@@ -15,7 +15,6 @@ public class ProjectActivitiesController : ControllerBase
 {
     private readonly IProjectActivityService projectActivityService;
     private readonly IProjectUserService projectUserService;
-    private readonly IActivityService activityService;
 
     public ProjectActivitiesController(IProjectActivityService _projectActivityService, IProjectUserService _projectUserService)
     {

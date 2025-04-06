@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using TimeTrackerApi.Models;
 using TimeTrackerApi.Services.ActivityService;
-using TimeTrackerApi.Services.ProjectService;
 using TimeTrackerApi.Services.ProjectUserService;
 using TimeTrackerApi.Services.UserService;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;

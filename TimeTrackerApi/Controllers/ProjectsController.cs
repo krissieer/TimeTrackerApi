@@ -5,8 +5,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using TimeTrackerApi.Controllers;
 using TimeTrackerApi.Models;
-using TimeTrackerApi.Services.ActivityService;
-using TimeTrackerApi.Services.ProjectActivityService;
 using TimeTrackerApi.Services.ProjectService;
 using TimeTrackerApi.Services.ProjectUserService;
 

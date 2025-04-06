@@ -47,7 +47,7 @@ public class ActivityPeriodService: IActivityPeriodService
     /// <param name="date2"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public async Task<ActivityPeriod> UpdateActivityPeriod(int activityPeriodId, DateTime? data1 = null, DateTime? data2 = null)
+    public async Task<List<ActivityPeriod>> UpdateActivityPeriod(int activityPeriodId, DateTime? data1 = null, DateTime? data2 = null)
     {
         var activityPeriod = await context.ActivityPeriods.FirstOrDefaultAsync(a => a.Id == activityPeriodId);
         if (activityPeriod is null)
@@ -76,14 +76,43 @@ public class ActivityPeriodService: IActivityPeriodService
         DateTime startTime = activityPeriod.StartTime;
         DateTime? stopTime = activityPeriod.StopTime;
 
-        TimeSpan? result = stopTime - startTime;
-        activityPeriod.TotalTime = result;
+        var result = new List<ActivityPeriod>();
+        if (startTime.Date == stopTime.Value.Date) //время остановки и время начала в пределах одного дня
+        {
+            TimeSpan? totalDuration = stopTime - startTime;
+            activityPeriod.TotalTime = totalDuration;
+            activityPeriod.TotalSeconds = (long)totalDuration.Value.TotalSeconds;
+            await context.SaveChangesAsync();
+            result.Add(activityPeriod);
+        }
+        else // Если даты разные 
+        {
+            var endOfStartDay = DateTime.SpecifyKind(startTime.Date.AddDays(1).AddSeconds(-1), DateTimeKind.Unspecified);
+            var utcEndOfStartDay = TimeZoneInfo.ConvertTimeToUtc(endOfStartDay, timeZone);
+            activityPeriod.StopTime = DateTime.SpecifyKind(utcEndOfStartDay, DateTimeKind.Unspecified);
+            var firstDuration = utcEndOfStartDay - startTime;
+            activityPeriod.TotalTime = firstDuration;
+            activityPeriod.TotalSeconds = (long)firstDuration.TotalSeconds;
+            result.Add(activityPeriod);
 
-        long totSec = (long)result.Value.TotalSeconds;
-        activityPeriod.TotalSeconds = totSec;
-        await context.SaveChangesAsync();
+            var secondStart = DateTime.SpecifyKind(endOfStartDay.AddSeconds(1), DateTimeKind.Unspecified);
+            var utcsecondStart = TimeZoneInfo.ConvertTimeToUtc(secondStart, timeZone);
+            var secondDuration = stopTime - utcsecondStart;
+            var newPeriod = new ActivityPeriod
+            {
+                ActivityId = activityPeriod.ActivityId,
+                StartTime = DateTime.SpecifyKind(utcsecondStart, DateTimeKind.Unspecified),
+                StopTime = stopTime,
+                TotalTime = secondDuration,
+                TotalSeconds = (long)secondDuration.Value.TotalSeconds
+            };
 
-        return activityPeriod;
+            await context.ActivityPeriods.AddAsync(newPeriod);
+            await context.SaveChangesAsync();
+            result.Add(newPeriod);
+        }
+
+        return result;
     }
 
     public async Task<ActivityPeriod> StartTracking(int activityId)
@@ -107,7 +136,7 @@ public class ActivityPeriodService: IActivityPeriodService
     /// </summary>
     /// <param name="activityId"></param>
     /// <returns></returns>
-    public async Task<ActivityPeriod> StopTracking(int activityId)
+    public async Task<List<ActivityPeriod>> StopTracking(int activityId)
     {
         var result = await SetStopTime(activityId);
         if (result is null)
@@ -125,23 +154,60 @@ public class ActivityPeriodService: IActivityPeriodService
     /// <param name="activityId"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public async Task<ActivityPeriod> SetStopTime(int activityId)
+    public async Task<List<ActivityPeriod>> SetStopTime(int activityId)
     {
         var startTime = await GetStartTimeById(activityId);
 
-        var activityPeriod = await context.ActivityPeriods.FirstOrDefaultAsync(a => a.ActivityId == activityId && a.StartTime == startTime);
+        var activityPeriod = await context.ActivityPeriods
+            .FirstOrDefaultAsync(a => a.ActivityId == activityId && a.StartTime == startTime);
+
         if (activityPeriod is null)
             throw new Exception("ActivityPeriod not found.");
 
-        DateTime stopTime = DateTime.Now;
-        DateTime time = DateTime.SpecifyKind(stopTime, DateTimeKind.Unspecified);
-        activityPeriod.StopTime = time;
-        TimeSpan result = stopTime - startTime;
-        activityPeriod.TotalTime = result;
-        activityPeriod.TotalSeconds = (long)result.TotalSeconds;
+        DateTime stopTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
 
-        await context.SaveChangesAsync();
-        return activityPeriod;
+        var result = new List<ActivityPeriod>();
+
+        if (startTime.Date == stopTime.Date) //дата начала и конца в пределах одного дня
+        {
+            activityPeriod.StopTime = stopTime;
+            var diff = stopTime - startTime;
+            activityPeriod.TotalTime = diff;
+            activityPeriod.TotalSeconds = (long)diff.TotalSeconds;
+
+            await context.SaveChangesAsync();
+            result.Add(activityPeriod);
+            return result;
+        }
+        else //если дата начала и конца отслеживания разные
+        {
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
+
+            var endOfStartDay = DateTime.SpecifyKind(startTime.Date.AddDays(1).AddSeconds(-1), DateTimeKind.Unspecified);
+            var utcEndOfStartDay = TimeZoneInfo.ConvertTimeToUtc(endOfStartDay, timeZone);
+            activityPeriod.StopTime = DateTime.SpecifyKind(utcEndOfStartDay, DateTimeKind.Unspecified);
+            var firstDuration = utcEndOfStartDay - startTime;
+            activityPeriod.TotalTime = firstDuration;
+            activityPeriod.TotalSeconds = (long)firstDuration.TotalSeconds;
+            result.Add(activityPeriod);
+
+            var secondStart = DateTime.SpecifyKind(endOfStartDay.AddSeconds(1), DateTimeKind.Unspecified);
+            var utcsecondStart = TimeZoneInfo.ConvertTimeToUtc(secondStart, timeZone);
+            var secondDuration = stopTime - utcsecondStart;
+            var newPeriod = new ActivityPeriod
+            {
+                ActivityId = activityPeriod.ActivityId,
+                StartTime = DateTime.SpecifyKind(utcsecondStart, DateTimeKind.Unspecified),
+                StopTime = stopTime,
+                TotalTime = secondDuration,
+                TotalSeconds = (long)secondDuration.TotalSeconds
+            };
+
+            await context.ActivityPeriods.AddAsync(newPeriod);
+            await context.SaveChangesAsync();
+            result.Add(newPeriod);
+            return result;
+        }
     }
 
     /// <summary>

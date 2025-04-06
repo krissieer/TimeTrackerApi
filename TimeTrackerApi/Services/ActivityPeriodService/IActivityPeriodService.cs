@@ -8,15 +8,15 @@ namespace TimeTrackerApi.Services.ActivityPeriodService
 
         Task<ActivityPeriod> AddActivityPeriod(int activityId);
 
-        Task<ActivityPeriod> UpdateActivityPeriod(int activityPeriodId, DateTime? data1 = null, DateTime? date2 = null);
+        Task<List<ActivityPeriod>> UpdateActivityPeriod(int activityPeriodId, DateTime? data1 = null, DateTime? date2 = null);
 
         Task<ActivityPeriod> StartTracking(int activityId);
-        
-        Task<ActivityPeriod> SetStopTime(int activityId);
+
+        Task<List<ActivityPeriod>> SetStopTime(int activityId);
        
         Task<DateTime> GetStartTimeById(int activityId);
 
-        Task<ActivityPeriod> StopTracking(int activityId);
+        Task<List<ActivityPeriod>> StopTracking(int activityId);
 
         Task<bool> DeleteActivityPeriod(int activityPeriodId);
 
