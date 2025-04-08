@@ -24,7 +24,7 @@ public class ProjectUsersController : ControllerBase
     /// <returns></returns>
     [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetProjectUsers(int projectId)
+    public async Task<ActionResult> GetProjectUsers(int projectId)
     {
         var users = await projectUserService.GetUsersByProjectId(projectId);
         if (!users.Any())
@@ -51,7 +51,7 @@ public class ProjectUsersController : ControllerBase
     /// <returns></returns>
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> AddProjectUser([FromBody] AddProjectUserDto dto)
+    public async Task<ActionResult> AddProjectUser([FromBody] AddProjectUserDto dto)
     {
         var user = await projectUserService.AddProjectUser(dto.userId, dto.projectId, false);
         if (user == null)

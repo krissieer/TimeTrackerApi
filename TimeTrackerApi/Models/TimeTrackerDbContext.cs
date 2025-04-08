@@ -112,6 +112,8 @@ public class TimeTrackerDbContext : DbContext
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
             entity.Property(e => e.Name);
             entity.Property(e => e.AccessKey);
+            entity.Property(e => e.CreationDate);
+            entity.Property(e => e.FinishDate).IsRequired(false);
 
             entity.HasMany(e => e.ProjectUsers)
                   .WithOne(a => a.Project)

@@ -184,16 +184,16 @@ public class ActivityService: IActivityService
         return await context.SaveChangesAsync() >= 1;
     }
 
-    /// <summary>
-    /// Проверка принадлежности активности пользователю
-    /// </summary>
-    /// <param name="activityId"></param>
-    /// <param name="userId"></param>
-    /// <returns></returns>
-    public async Task<bool> IsOwner(int activityId, int userId)
-    {
-        return await context.Activities
-            .AnyAsync(a => a.Id == activityId && a.UserId == userId);
-    }
+    ///// <summary>
+    ///// Проверка принадлежности активности пользователю
+    ///// </summary>
+    ///// <param name="activityId"></param>
+    ///// <param name="userId"></param>
+    ///// <returns></returns>
+    //public async Task<bool> IsOwner(int activityId, int userId)
+    //{
+    //    return await context.Activities
+    //        .AnyAsync(a => a.Id == activityId && a.UserId == userId);
+    //}
 }
 

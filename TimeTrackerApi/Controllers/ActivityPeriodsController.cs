@@ -31,7 +31,7 @@ public class ActivityPeriodsController : ControllerBase
     /// <returns></returns>
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult<TimeSpan>> GetStatisticAsync(int activityId, DateTime? data1 = null, DateTime? data2 = null)
+    public async Task<ActionResult> GetStatistic(int activityId, DateTime? data1 = null, DateTime? data2 = null)
     {
         var activityExists = await activityService.GetActivityById(activityId);
         if (activityExists == null)
@@ -54,8 +54,8 @@ public class ActivityPeriodsController : ControllerBase
         else
             statistic = await activityPeriodService.GetStatistic(activityId); //весь период
 
-        if (statistic.Count == 0)
-            return NotFound("No statistics found for the given period");
+        if (!statistic.Any())
+            return Ok(new List<ActivityPeriod>());
 
         var result = statistic.Select(a => new
         {
@@ -80,7 +80,7 @@ public class ActivityPeriodsController : ControllerBase
     /// <returns></returns>
     [HttpPost]
     [Authorize]
-    public async Task<ActionResult<ActivityPeriod>> StartStopTracking([FromBody] StartStopTrackingDto dto)
+    public async Task<ActionResult> StartStopTracking([FromBody] StartStopTrackingDto dto)
     {
         var activityExists = await activityService.GetActivityById(dto.activityId);
         if (activityExists == null)
@@ -121,7 +121,7 @@ public class ActivityPeriodsController : ControllerBase
     /// <returns></returns>
     [HttpPut("{activityPeriodId}")]
     [Authorize]
-    public async Task<ActionResult<bool>> UpdateTimeAsynс([FromBody] UpdatePeriod dto, int activityPeriodId)
+    public async Task<ActionResult> UpdateTime([FromBody] UpdatePeriodDto dto, int activityPeriodId)
     {
         if (!dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
             return BadRequest("At least one of newStartTime or newStopTime must has value.");
@@ -165,7 +165,7 @@ public class ActivityPeriodsController : ControllerBase
     /// <returns></returns>
     [HttpDelete("{activityPeriodId}")]
     [Authorize]
-    public async Task<ActionResult> DeleteActivityPeriodAsync(int activityPeriodId)
+    public async Task<IActionResult> DeleteActivityPeriod(int activityPeriodId)
     {
         var activityPeriod = await activityPeriodService.GetActivityPeriodById(activityPeriodId);
         if (activityPeriod is null)
@@ -184,7 +184,7 @@ public class StartStopTrackingDto
     public bool isStarted { get; set; }
 }
 
-public class UpdatePeriod
+public class UpdatePeriodDto
 {
     [JsonConverter(typeof(DateTimeConverter))]
     public DateTime? newStartTime { get; set; } = null;

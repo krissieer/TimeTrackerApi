@@ -29,18 +29,20 @@ namespace TimeTrackerApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetProjects()
+        public async Task<ActionResult> GetProjects([FromQuery] bool current = true)
         {
-            var projects = await projectService.GetProjects() ?? new List<Project>();
+            var projects = await projectService.GetProjects(current) ?? new List<Project>();
 
             if (!projects.Any())
                 return Ok(new List<Project>());
 
-            var result = projects.Select(a => new ProjectRequest
+            var result = projects.Select(a => new ProjectDto
             {
                 projectId = a.Id,
                 projectName = a.Name,
-                projectKey = a.AccessKey
+                projectKey = a.AccessKey,
+                creationDate = a.CreationDate,
+                finishDate = a.FinishDate,
             });
 
             return Ok(result);
@@ -52,18 +54,20 @@ namespace TimeTrackerApi.Controllers
         /// <returns></returns>
         [HttpGet("{projectId}")]
         [Authorize]
-        public async Task<IActionResult> GetProjectById(int projectId)
+        public async Task<ActionResult> GetProjectById(int projectId)
         {
             var project = await projectService.GetProjectById(projectId);
 
             if (project is null)
                 return NotFound($"Project with ID {projectId} not found.");
 
-            var result = new ProjectRequest
+            var result = new ProjectDto
             {
                 projectId = project.Id,
                 projectName = project.Name,
-                projectKey = project.AccessKey
+                projectKey = project.AccessKey,
+                creationDate = project.CreationDate,
+                finishDate = project.FinishDate,
             };
 
             return Ok(result);
@@ -76,25 +80,29 @@ namespace TimeTrackerApi.Controllers
         /// <returns></returns>
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> AddProject([FromBody] AddProjectDto dto)
+        public async Task<ActionResult> AddProject([FromBody] AddEditProjectDto dto)
         {
             var USER = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(USER))
                 return Unauthorized("User not authenticated.");
             int user_Id = int.Parse(USER);
 
-            var project = await projectService.AddProject(dto.projectName); //добавление пользователя в Projects
-            if (project == null)
+            if (!dto.closeProject)
             {
-                return Conflict("Project already exists.");
-            }
-            var projectUser = await projectUserService.AddProjectUser(user_Id, project.Id, true); //Добавление пользователя в ProjectUsers
-            if (projectUser == null)
-            {
-                return Conflict("Project does not exist or the user is already assigned to this project.");
-            }
+                var project = await projectService.AddProject(dto.projectName); //добавление пользователя в Projects
+                if (project == null)
+                {
+                    return BadRequest();
+                }
+                var projectUser = await projectUserService.AddProjectUser(user_Id, project.Id, true); //Добавление пользователя в ProjectUsers
+                if (projectUser == null)
+                {
+                    return Conflict("Project does not exist or the user is already assigned to this project.");
+                }
 
-            return Ok(new { AccessKey = project.AccessKey });
+                return Ok(new { AccessKey = project.AccessKey });
+            }
+            return BadRequest();
         }
 
         /// <summary>
@@ -104,7 +112,7 @@ namespace TimeTrackerApi.Controllers
         /// <returns></returns>
         [HttpPut("{projectId}")]
         [Authorize]
-        public async Task<IActionResult> UpdateProject([FromBody] UpdateProjectDto dto, int projectId)
+        public async Task<ActionResult> UpdateProject([FromBody] AddEditProjectDto dto, int projectId)
         {
             var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userID))
@@ -115,16 +123,27 @@ namespace TimeTrackerApi.Controllers
             if (!isCreator)
                 return Conflict("You don't have access to edit this project");
 
+            if (dto.closeProject)
+            {
+                bool closed = await projectService.CloseProject(projectId);
+                if (closed)
+                    return Ok(closed);
+                else
+                    return BadRequest("Failed to close project");
+            }
+                
             var project = await projectService.UpdateProject(projectId, dto.projectName);
             if (project == null)
             {
                 return NotFound($"Project with ID {projectId} not found.");
             }
-            var result = new ProjectRequest
+            var result = new ProjectDto
             {
                 projectId = project.Id,
                 projectName = project.Name,
-                projectKey = project.AccessKey
+                projectKey = project.AccessKey,
+                creationDate = project.CreationDate,
+                finishDate = project.FinishDate,
             };
             return Ok(result);
         }
@@ -136,7 +155,7 @@ namespace TimeTrackerApi.Controllers
         /// <returns></returns>
         [HttpDelete("{projectId}")]
         [Authorize]
-        public async Task<ActionResult> DeleteProject(int projectId)
+        public async Task<IActionResult> DeleteProject(int projectId)
         {
             var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userID))
@@ -156,19 +175,17 @@ namespace TimeTrackerApi.Controllers
     }
 }
 
-public class ProjectRequest
+public class ProjectDto
 {
     public int projectId { get; set; }
     public string projectName { get; set; }
     public string projectKey { get; set; }
+    public DateTime creationDate { get; set; }
+    public DateTime? finishDate { get; set; }
 }
 
-public class AddProjectDto
+public class AddEditProjectDto
 {
-    public string projectName { get; set; }
-}
-
-public class UpdateProjectDto
-{
+    public bool closeProject { get; set; } = false;
     public string projectName { get; set; }
 }

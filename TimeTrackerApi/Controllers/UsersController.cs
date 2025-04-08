@@ -31,7 +31,7 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <returns></returns>
     [HttpGet]
-    public async Task<ActionResult<User>> GetUsers()
+    public async Task<ActionResult> GetUsers()
     {
         var users = await userService.GetUsers() ?? new List<User>();
         if (!users.Any())
@@ -48,13 +48,12 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
-
     /// <summary>
     /// Получить данные об одном пользователе
     /// </summary>
     /// <returns></returns>
     [HttpGet("{userId}")]
-    public async Task<ActionResult<User>> GetUserById(int userId)
+    public async Task<ActionResult> GetUserById(int userId)
     {
         var user = await userService.GetUserById(userId);
         if (user is null)
@@ -80,7 +79,7 @@ public class UsersController : ControllerBase
     /// <returns></returns>
     [HttpGet("{userId}/activities")]
     [Authorize]
-    public async Task<IActionResult> GetActivities(int userId, [FromQuery] bool? onlyArchived, [FromQuery] bool? onlyActive)
+    public async Task<ActionResult> GetActivities(int userId, [FromQuery] bool? onlyArchived, [FromQuery] bool? onlyActive)
     {
         if (onlyArchived == true && onlyActive == true)
         {
@@ -110,19 +109,19 @@ public class UsersController : ControllerBase
     /// <returns></returns>
     [HttpGet("{userId}/projects")]
     [Authorize]
-    public async Task<IActionResult> GetProjectsByUserId(int userId)
+    public async Task<ActionResult> GetProjectsByUserId(int userId)
     {
         var projects = await projectUserService.GetProjectsByUserId(userId);
         if (!projects.Any())
         {
-            return Ok(new List<ProjectDto>());
+            return Ok(new List<ProjectUserDto>());
         }
-        var result = projects.Select(a => new ProjectDto
+        var result = projects.Select(a => new ProjectUserDto
         {
             id = a.Id,
             userId = a.UserId,
             projectId = a.ProjectId,
-            creator = a.Creator
+            isCreator = a.Creator
         });
 
         return Ok(result);
@@ -134,15 +133,13 @@ public class UsersController : ControllerBase
     /// <param name="dto"></param>
     /// <returns></returns>
     [HttpPost]
-    public async Task<IActionResult> RegistrtationLogin([FromBody] AuthRequestDto dto)
+    public async Task<IActionResult> RegistrtationLogin([FromBody] AuthDto dto)
     {
         if (!ModelState.IsValid) // имя и пароль не пустые
         {
             return BadRequest(ModelState);
         }
-
         string token;
-
         if ( dto.isNewUser )
         {
             token = await userService.Registration(dto.name, dto.password, dto.chatId);
@@ -168,7 +165,7 @@ public class UsersController : ControllerBase
     /// <returns></returns>
     [HttpPost("project")]
     [Authorize]
-    public async Task<IActionResult> ConnectToProject([FromBody] ConnectToProjectDto dto)
+    public async Task<ActionResult> ConnectToProject([FromBody] ConnectToProjectDto dto)
     {
         var USER = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(USER))
@@ -191,7 +188,7 @@ public class UsersController : ControllerBase
 
     [HttpPut("{userId}")]
     [Authorize]
-    public async Task<IActionResult> EditUser([FromBody] EditUserDto dto, int userId)
+    public async Task<ActionResult> EditUser([FromBody] EditUserDto dto, int userId)
     {
         var user = await userService.GetUserById(userId);
         if (user == null)
@@ -213,12 +210,11 @@ public class UsersController : ControllerBase
             name = user.Name
         };
         return Ok(result);
-
     }
 
     [HttpDelete("{userId}")]
     [Authorize]
-    public async Task<ActionResult> DeleteUser(int userId)
+    public async Task<IActionResult> DeleteUser(int userId)
     {
         var success = await userService.DeleteUser(userId);
         if (!success)
@@ -227,7 +223,7 @@ public class UsersController : ControllerBase
     }
 }
 
-public class AuthRequestDto
+public class AuthDto
 {
     [Required]
     public bool isNewUser { get; set; }
@@ -253,14 +249,6 @@ public class ActivityDto
     public DateTime activeFrom { get; set; }
     public int userId { get; set; }
     public int statusId { get; set; }
-}
-
-public class ProjectDto
-{
-    public int id { get; set; }
-    public int userId { get; set; }
-    public int projectId { get; set; }
-    public bool creator { get; set; }
 }
 
 public class EditUserDto

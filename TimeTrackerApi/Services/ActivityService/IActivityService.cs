@@ -18,10 +18,10 @@ namespace TimeTrackerApi.Services.ActivityService
 
         Task<bool> DeleteActivity(int activityId);
 
-        Task<int> GetStatusById(int activityId);
+        //Task<int> GetStatusById(int activityId);
 
         Task<bool> ChangeStatus(int activityId, int newStatusId);
 
-        Task<bool> IsOwner(int activityId, int userId);
+        //Task<bool> IsOwner(int activityId, int userId);
     }
 }

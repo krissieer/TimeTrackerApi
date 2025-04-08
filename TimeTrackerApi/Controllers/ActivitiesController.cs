@@ -29,7 +29,7 @@ public class ActivitiesController : ControllerBase
     /// <returns></returns>
     [HttpGet("{activityId}/projects")]
     [Authorize]
-    public async Task<IActionResult> GetProjectsByActivityId(int activityId)
+    public async Task<ActionResult> GetProjectsByActivityId(int activityId)
     {
         var activityExists = await activityService.GetActivityById(activityId);
         if (activityExists == null)
@@ -57,7 +57,7 @@ public class ActivitiesController : ControllerBase
     /// <returns></returns>
     [HttpGet("{activityId}")]
     [Authorize]
-    public async Task<IActionResult> GetActivityById(int activityId)
+    public async Task<ActionResult> GetActivityById(int activityId)
     {
         var activity = await activityService.GetActivityById(activityId);
         if (activity == null)
@@ -82,7 +82,7 @@ public class ActivitiesController : ControllerBase
     /// <returns></returns>
     [HttpPost]
     [Authorize]
-    public async Task<ActionResult<bool>> AddActivitiesAsync([FromBody] AddActivityRequest dto)
+    public async Task<IActionResult> AddActivities([FromBody] AddActivityDto dto)
     {
         bool result = await activityService.AddActivity(dto.userId, dto.activityName);
 
@@ -99,7 +99,7 @@ public class ActivitiesController : ControllerBase
     /// <returns></returns>
     [HttpPost("add-defualt")]
     [Authorize]
-    public async Task<ActionResult<bool>> AddDefaultActivitiesAsync(int userId)
+    public async Task<IActionResult> AddDefaultActivities(int userId)
     {
         bool result = await activityService.AddDefaultActivities(userId);
         if (!result)
@@ -114,7 +114,7 @@ public class ActivitiesController : ControllerBase
     /// <returns></returns>
     [HttpPut("{activityId}")]
     [Authorize]
-    public async Task<ActionResult<bool>> UpdateActivityAsynс([FromBody] UpdateActivityDto dto, int activityId)
+    public async Task<IActionResult> UpdateActivity([FromBody] UpdateActivityDto dto, int activityId)
     {
         if (dto.updateName && string.IsNullOrWhiteSpace(dto.newName))
         {
@@ -154,7 +154,7 @@ public class ActivitiesController : ControllerBase
     /// <returns></returns>
     [HttpDelete("{activityId}")]
     [Authorize]
-    public async Task<ActionResult> DeleteActivityAsync(int activityId)
+    public async Task<IActionResult> DeleteActivity(int activityId)
     {
         var activity = await activityService.GetActivityById(activityId);
         if (activity == null)
@@ -175,7 +175,7 @@ public class UpdateActivityDto
     public bool archived { get; set; }
     public string? newName { get; set; }
 }
-public class AddActivityRequest
+public class AddActivityDto
 {
     public int userId { get; set; }
     public string activityName { get; set; } = string.Empty;

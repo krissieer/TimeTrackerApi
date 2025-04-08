@@ -19,14 +19,23 @@ public class ProjectService: IProjectService
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    public async Task<List<Project>> GetProjects()
+    public async Task<List<Project>> GetProjects(bool current = true)
     {
-        var projects = await context.Projects.ToListAsync();
-        if (projects == null)
-            return null;
-        return projects;
+        var projects = context.Projects.AsQueryable();
+
+        if (current)
+            projects = projects.Where(a => a.FinishDate == null);
+        else
+            projects = projects.Where(a => a.FinishDate != null);
+
+        return await projects.ToListAsync();
     }
 
+    /// <summary>
+    /// Получить проект по ID
+    /// </summary>
+    /// <param name="Id"></param>
+    /// <returns></returns>
     public async Task<Project> GetProjectById(int Id)
     {
         var project = await context.Projects.FirstOrDefaultAsync(p => p.Id == Id);
@@ -56,6 +65,7 @@ public class ProjectService: IProjectService
             {
                 Name = name,
                 AccessKey = accessKey,
+                CreationDate = DateTime.Now,
             };
             await context.Projects.AddAsync(project);
             await context.SaveChangesAsync();
@@ -109,6 +119,21 @@ public class ProjectService: IProjectService
         if (project == null)
             throw new KeyNotFoundException($"Project with ID {id} not found.");
         context.Projects.Remove(project);
+        return await context.SaveChangesAsync() >= 1;
+    }
+
+    /// <summary>
+    /// Закрыть проект
+    /// </summary>
+    /// <param name="projectId"></param>
+    /// <returns></returns>
+    /// <exception cref="KeyNotFoundException"></exception>
+    public async Task<bool> CloseProject(int projectId)
+    {
+        var project = await context.Projects.FirstOrDefaultAsync(a => a.Id == projectId);
+        if (project == null)
+            throw new KeyNotFoundException($"Project with ID {projectId} not found.");
+        project.FinishDate = DateTime.UtcNow.Date;
         return await context.SaveChangesAsync() >= 1;
     }
 }

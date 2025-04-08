@@ -29,7 +29,7 @@ public class ProjectActivitiesController : ControllerBase
     /// <returns></returns>
     [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetActivities(int projectId)
+    public async Task<ActionResult> GetProjectActivities(int projectId)
     {
         var activities = await projectActivityService.GetActivitiesByProjectId(projectId);
         if (!activities.Any() || activities == null)
@@ -53,18 +53,18 @@ public class ProjectActivitiesController : ControllerBase
     /// <returns></returns>
     [HttpPost]
     [Authorize]
-    public async Task<IActionResult> AddProjectActivity(int activityId, int projectId)
+    public async Task<ActionResult> AddProjectActivity([FromBody] AddProjectActivityDto dto)
     {
         var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userID))
             return Unauthorized("User not authenticated.");
         int userId = int.Parse(userID);
 
-        var isCreator = await projectUserService.IsCreator(userId, projectId);
+        var isCreator = await projectUserService.IsCreator(userId, dto.projectId);
         if (!isCreator)
             return Conflict("You don't have access to edit this project");
 
-        var result = await projectActivityService.AddProjectActivity(activityId, projectId);
+        var result = await projectActivityService.AddProjectActivity(dto.activityId, dto.projectId);
         if (result == null)
             return Conflict("Activity already exists for this project or project does not exist");
 
@@ -101,6 +101,12 @@ public class ProjectActivitiesController : ControllerBase
 public class ProjectActivityDto
 {
     public int id { get; set; }
+    public int activityId { get; set; }
+    public int projectId { get; set; }
+}
+
+public class AddProjectActivityDto
+{
     public int activityId { get; set; }
     public int projectId { get; set; }
 }
