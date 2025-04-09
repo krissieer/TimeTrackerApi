@@ -75,7 +75,6 @@ public class UserService:IUserService
             {
                 throw new Exception($"registration error: {ex.Message}");
             }
-           
         }
         return string.Empty;
     }

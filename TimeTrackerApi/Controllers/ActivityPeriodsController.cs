@@ -57,16 +57,16 @@ public class ActivityPeriodsController : ControllerBase
         if (!statistic.Any())
             return Ok(new List<ActivityPeriod>());
 
-        var result = statistic.Select(a => new
+        var result = statistic.Select(a => new ActivityPeriodDto
         {
-            a.Id,
-            a.ActivityId,
-            StartTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(a.StartTime, DateTimeKind.Utc), tz).ToString("yyyy-MM-dd HH:mm:ss"),
-            StopTime = a.StopTime.HasValue
+            activityPeriodId = a.Id,
+            activityId = a.ActivityId,
+            startTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(a.StartTime, DateTimeKind.Utc), tz),
+            stopTime = a.StopTime.HasValue
                ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(a.StopTime.Value, DateTimeKind.Utc), tz)
                : (DateTime?)null,
-            TotalTime = a.TotalTime?.ToString(@"hh\:mm\:ss"),
-            a.TotalSeconds
+            totalTime =  a.TotalTime,
+            totalSeconds = a.TotalSeconds
         });
 
         return Ok(new { ActivityPeriods = result });

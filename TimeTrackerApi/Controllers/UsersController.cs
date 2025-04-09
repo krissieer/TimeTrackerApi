@@ -186,13 +186,16 @@ public class UsersController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Обновить данные пользователя
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <param name="userId"></param>
+    /// <returns></returns>
     [HttpPut("{userId}")]
     [Authorize]
     public async Task<ActionResult> EditUser([FromBody] EditUserDto dto, int userId)
     {
-        var user = await userService.GetUserById(userId);
-        if (user == null)
-            return NotFound($"User with ID {userId} not found.");
         bool updated = false;
         if (dto.updateName && dto.updatePassword)
             updated = await userService.UpdateUser(userId, dto.userName, dto.password);
@@ -203,6 +206,7 @@ public class UsersController : ControllerBase
         if (!updated)
             StatusCode(500, "Failed to edit user due to server error.");
 
+        var user = await userService.GetUserById(userId);
         var result = new UserDto
         {
             id = user.Id,

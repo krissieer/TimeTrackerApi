@@ -41,11 +41,11 @@ public class ActivitiesController : ControllerBase
         {
             return NotFound("No projects found for this activity.");
         }
-        var result = projects.Select(a => new
+        var result = projects.Select(a => new ProjectActivityDto
         {
-            a.Id,
-            a.ProjectId,
-            a.ActivityId
+            id = a.Id,
+            activityId = a.ActivityId,
+            projectId = a.ProjectId
         });
         return Ok(result);
     }
