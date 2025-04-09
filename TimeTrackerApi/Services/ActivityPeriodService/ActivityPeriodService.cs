@@ -27,12 +27,13 @@ public class ActivityPeriodService: IActivityPeriodService
     /// </summary>
     /// <param name="activityId"></param>
     /// <returns></returns>
-    public async Task<ActivityPeriod> AddActivityPeriod(int activityId)
+    public async Task<ActivityPeriod> AddActivityPeriod(int activityId, int userId)
     {
         var activityPeriod = new ActivityPeriod
         {
             ActivityId = activityId,
             StartTime = DateTime.Now,
+            ExecutorId = userId
         };
         await context.ActivityPeriods.AddAsync(activityPeriod);
         await context.SaveChangesAsync();
@@ -47,9 +48,9 @@ public class ActivityPeriodService: IActivityPeriodService
     /// <param name="date2"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public async Task<List<ActivityPeriod>> UpdateActivityPeriod(int activityPeriodId, DateTime? data1 = null, DateTime? data2 = null)
+    public async Task<List<ActivityPeriod>> UpdateActivityPeriod(int activityPeriodId, int userId, DateTime? data1 = null, DateTime? data2 = null)
     {
-        var activityPeriod = await context.ActivityPeriods.FirstOrDefaultAsync(a => a.Id == activityPeriodId);
+        var activityPeriod = await context.ActivityPeriods.FirstOrDefaultAsync(a => a.Id == activityPeriodId && a.ExecutorId == userId);
         if (activityPeriod is null)
             return null;
         var timeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
@@ -81,7 +82,6 @@ public class ActivityPeriodService: IActivityPeriodService
         {
             TimeSpan? totalDuration = stopTime - startTime;
             activityPeriod.TotalTime = totalDuration;
-            activityPeriod.TotalSeconds = (long)totalDuration.Value.TotalSeconds;
             await context.SaveChangesAsync();
             result.Add(activityPeriod);
         }
@@ -92,7 +92,6 @@ public class ActivityPeriodService: IActivityPeriodService
             activityPeriod.StopTime = DateTime.SpecifyKind(utcEndOfStartDay, DateTimeKind.Unspecified);
             var firstDuration = utcEndOfStartDay - startTime;
             activityPeriod.TotalTime = firstDuration;
-            activityPeriod.TotalSeconds = (long)firstDuration.TotalSeconds;
             result.Add(activityPeriod);
 
             var secondStart = DateTime.SpecifyKind(endOfStartDay.AddSeconds(1), DateTimeKind.Unspecified);
@@ -104,7 +103,6 @@ public class ActivityPeriodService: IActivityPeriodService
                 StartTime = DateTime.SpecifyKind(utcsecondStart, DateTimeKind.Unspecified),
                 StopTime = stopTime,
                 TotalTime = secondDuration,
-                TotalSeconds = (long)secondDuration.Value.TotalSeconds
             };
 
             await context.ActivityPeriods.AddAsync(newPeriod);
@@ -115,9 +113,9 @@ public class ActivityPeriodService: IActivityPeriodService
         return result;
     }
 
-    public async Task<ActivityPeriod> StartTracking(int activityId)
+    public async Task<ActivityPeriod> StartTracking(int activityId, int userId)
     {
-        var result = await AddActivityPeriod(activityId);
+        var result = await AddActivityPeriod(activityId, userId);
         if (result is null)
             return null;
         var activity = await context.Activities.FindAsync(activityId);
@@ -136,9 +134,9 @@ public class ActivityPeriodService: IActivityPeriodService
     /// </summary>
     /// <param name="activityId"></param>
     /// <returns></returns>
-    public async Task<List<ActivityPeriod>> StopTracking(int activityId)
+    public async Task<List<ActivityPeriod>> StopTracking(int activityId, int userId)
     {
-        var result = await SetStopTime(activityId);
+        var result = await SetStopTime(activityId, userId);
         if (result is null)
             throw new Exception("Failed to stop");
 
@@ -154,12 +152,11 @@ public class ActivityPeriodService: IActivityPeriodService
     /// <param name="activityId"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public async Task<List<ActivityPeriod>> SetStopTime(int activityId)
+    public async Task<List<ActivityPeriod>> SetStopTime(int activityId, int userId)
     {
-        var startTime = await GetStartTimeById(activityId);
+        var startTime = await GetStartTimeById(activityId, userId);
 
-        var activityPeriod = await context.ActivityPeriods
-            .FirstOrDefaultAsync(a => a.ActivityId == activityId && a.StartTime == startTime);
+        var activityPeriod = await context.ActivityPeriods.FirstOrDefaultAsync(a => a.ActivityId == activityId && a.StartTime == startTime);
 
         if (activityPeriod is null)
             throw new Exception("ActivityPeriod not found.");
@@ -173,7 +170,6 @@ public class ActivityPeriodService: IActivityPeriodService
             activityPeriod.StopTime = stopTime;
             var diff = stopTime - startTime;
             activityPeriod.TotalTime = diff;
-            activityPeriod.TotalSeconds = (long)diff.TotalSeconds;
 
             await context.SaveChangesAsync();
             result.Add(activityPeriod);
@@ -188,7 +184,6 @@ public class ActivityPeriodService: IActivityPeriodService
             activityPeriod.StopTime = DateTime.SpecifyKind(utcEndOfStartDay, DateTimeKind.Unspecified);
             var firstDuration = utcEndOfStartDay - startTime;
             activityPeriod.TotalTime = firstDuration;
-            activityPeriod.TotalSeconds = (long)firstDuration.TotalSeconds;
             result.Add(activityPeriod);
 
             var secondStart = DateTime.SpecifyKind(endOfStartDay.AddSeconds(1), DateTimeKind.Unspecified);
@@ -197,10 +192,10 @@ public class ActivityPeriodService: IActivityPeriodService
             var newPeriod = new ActivityPeriod
             {
                 ActivityId = activityPeriod.ActivityId,
+                ExecutorId = activityPeriod.ExecutorId,
                 StartTime = DateTime.SpecifyKind(utcsecondStart, DateTimeKind.Unspecified),
                 StopTime = stopTime,
                 TotalTime = secondDuration,
-                TotalSeconds = (long)secondDuration.TotalSeconds
             };
 
             await context.ActivityPeriods.AddAsync(newPeriod);
@@ -215,9 +210,9 @@ public class ActivityPeriodService: IActivityPeriodService
     /// </summary>
     /// <param name="activityId"></param>
     /// <returns></returns>
-    public async Task<DateTime> GetStartTimeById(int activityId)
+    public async Task<DateTime> GetStartTimeById(int activityId, int userId)
     {
-        var activityPeriod = await context.ActivityPeriods.OrderBy(a => a.Id).LastOrDefaultAsync(a => a.ActivityId == activityId);
+        var activityPeriod = await context.ActivityPeriods.OrderBy(a => a.Id).LastOrDefaultAsync(a => a.ActivityId == activityId && a.ExecutorId == userId);
 
         if (activityPeriod == null)
             throw new Exception("Start time not found for the given activity ID.");
@@ -270,8 +265,6 @@ public class ActivityPeriodService: IActivityPeriodService
         else
             query = query.Where(a => a.ActivityId == activityId);
 
-        //var totalSeconds = await query.SumAsync(a => (long?)a.TotalSeconds) ?? 0;
-        //return TimeSpan.FromSeconds(totalSeconds);
         return await query.ToListAsync();
     }
     // Запустить GetStatistic в цикле (по каждой необходимой активности - по дефолту все активности пользователя (получить список активностей))

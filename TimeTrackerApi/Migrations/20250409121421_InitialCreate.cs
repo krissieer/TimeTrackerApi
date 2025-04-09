@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace TimeTrackerApi.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate_Final : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,7 +21,9 @@ namespace TimeTrackerApi.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Name = table.Column<string>(type: "text", nullable: false),
-                    AccessKey = table.Column<string>(type: "text", nullable: false)
+                    AccessKey = table.Column<string>(type: "text", nullable: false),
+                    CreationDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    FinishDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -118,10 +120,10 @@ namespace TimeTrackerApi.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     ActivityId = table.Column<int>(type: "integer", nullable: false),
+                    ExecutorId = table.Column<int>(type: "integer", nullable: false),
                     StartTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     StopTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    TotalTime = table.Column<TimeSpan>(type: "interval", nullable: true),
-                    TotalSeconds = table.Column<long>(type: "bigint", nullable: true)
+                    TotalTime = table.Column<TimeSpan>(type: "interval", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -130,6 +132,12 @@ namespace TimeTrackerApi.Migrations
                         name: "FK_ActivityPeriods_Activities_ActivityId",
                         column: x => x.ActivityId,
                         principalTable: "Activities",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ActivityPeriods_Users_ExecutorId",
+                        column: x => x.ExecutorId,
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -186,6 +194,11 @@ namespace TimeTrackerApi.Migrations
                 column: "ActivityId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ActivityPeriods_ExecutorId",
+                table: "ActivityPeriods",
+                column: "ExecutorId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ProjectActivities_ActivityId",
                 table: "ProjectActivities",
                 column: "ActivityId");
@@ -204,11 +217,6 @@ namespace TimeTrackerApi.Migrations
                 name: "IX_ProjectUsers_UserId",
                 table: "ProjectUsers",
                 column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_ChatId",
-                table: "Users",
-                column: "ChatId");
         }
 
         /// <inheritdoc />

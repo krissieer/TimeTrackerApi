@@ -64,14 +64,14 @@ namespace TimeTrackerApi.Migrations
                     b.Property<int>("ActivityId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ExecutorId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("StopTime")
                         .HasColumnType("timestamp without time zone");
-
-                    b.Property<long?>("TotalSeconds")
-                        .HasColumnType("bigint");
 
                     b.Property<TimeSpan?>("TotalTime")
                         .HasColumnType("interval");
@@ -79,6 +79,8 @@ namespace TimeTrackerApi.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ActivityId");
+
+                    b.HasIndex("ExecutorId");
 
                     b.ToTable("ActivityPeriods");
                 });
@@ -249,7 +251,15 @@ namespace TimeTrackerApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("TimeTrackerApi.Models.User", "User")
+                        .WithMany("ActivityPeriods")
+                        .HasForeignKey("ExecutorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Activity");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TimeTrackerApi.Models.ProjectActivity", b =>
@@ -312,6 +322,8 @@ namespace TimeTrackerApi.Migrations
             modelBuilder.Entity("TimeTrackerApi.Models.User", b =>
                 {
                     b.Navigation("Activities");
+
+                    b.Navigation("ActivityPeriods");
 
                     b.Navigation("ProjectUsers");
                 });

@@ -6,6 +6,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using TimeTrackerApi.Services.ActivityService;
 using System;
 using System.Text.Json.Serialization;
+using System.Security.Claims;
 
 namespace TimeTrackerApi.Controllers;
 
@@ -61,12 +62,12 @@ public class ActivityPeriodsController : ControllerBase
         {
             activityPeriodId = a.Id,
             activityId = a.ActivityId,
+            executorId = a.ExecutorId,
             startTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(a.StartTime, DateTimeKind.Utc), tz),
             stopTime = a.StopTime.HasValue
                ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(a.StopTime.Value, DateTimeKind.Utc), tz)
                : (DateTime?)null,
             totalTime =  a.TotalTime,
-            totalSeconds = a.TotalSeconds
         });
 
         return Ok(new { ActivityPeriods = result });
@@ -82,6 +83,11 @@ public class ActivityPeriodsController : ControllerBase
     [Authorize]
     public async Task<ActionResult> StartStopTracking([FromBody] StartStopTrackingDto dto)
     {
+        var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(user))
+            return Unauthorized("User not authenticated.");
+        int authorizedUserId = int.Parse(user);
+
         var activityExists = await activityService.GetActivityById(dto.activityId);
         if (activityExists == null)
         {
@@ -90,8 +96,8 @@ public class ActivityPeriodsController : ControllerBase
         TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
         List<ActivityPeriod> actPeriod = dto.isStarted
-            ? new List<ActivityPeriod> { await activityPeriodService.StartTracking(dto.activityId) }
-            : await activityPeriodService.StopTracking(dto.activityId);
+            ? new List<ActivityPeriod> { await activityPeriodService.StartTracking(dto.activityId, authorizedUserId) }
+            : await activityPeriodService.StopTracking(dto.activityId, authorizedUserId);
 
         if (actPeriod is null || !actPeriod.Any())
         {
@@ -102,12 +108,12 @@ public class ActivityPeriodsController : ControllerBase
         {
             activityPeriodId = actPeriod.Id,
             activityId = actPeriod.ActivityId,
+            executorId = actPeriod.ExecutorId,
             startTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(actPeriod.StartTime, DateTimeKind.Utc), tz),
             stopTime = actPeriod.StopTime.HasValue
                     ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(actPeriod.StopTime.Value, DateTimeKind.Utc), tz)
                     : (DateTime?)null,
             totalTime = actPeriod.TotalTime,
-            totalSeconds = actPeriod.TotalSeconds,
         }).ToList();
 
         return Ok(response);
@@ -123,6 +129,11 @@ public class ActivityPeriodsController : ControllerBase
     [Authorize]
     public async Task<ActionResult> UpdateTime([FromBody] UpdatePeriodDto dto, int activityPeriodId)
     {
+        var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(user))
+            return Unauthorized("User not authenticated.");
+        int authorizedUserId = int.Parse(user);
+
         if (!dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
             return BadRequest("At least one of newStartTime or newStopTime must has value.");
 
@@ -133,26 +144,26 @@ public class ActivityPeriodsController : ControllerBase
         List<ActivityPeriod>? result = null;
 
         if (dto.newStartTime.HasValue && dto.newStopTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, dto.newStartTime, dto.newStopTime);
+            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, authorizedUserId, dto.newStartTime, dto.newStopTime);
 
         else if (dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, dto.newStartTime);
+            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, authorizedUserId, dto.newStartTime);
 
         else if (dto.newStopTime.HasValue && !dto.newStartTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, null, dto.newStopTime);
+            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, authorizedUserId, null, dto.newStopTime);
 
         if (result is null)
-            return BadRequest("Failed to update activity period.");
+            return BadRequest("You can not edit this record");
 
         TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
         var resultDto = result.Select(period => new ActivityPeriodDto
         {
             activityPeriodId = period.Id,
             activityId = period.ActivityId,
+            executorId = period.ExecutorId,
             startTime = TimeZoneInfo.ConvertTimeFromUtc(period.StartTime, tz),
             stopTime = period.StopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(period.StopTime.Value, tz) : null,
             totalTime = period.TotalTime,
-            totalSeconds = period.TotalSeconds,
         }).ToList();
 
         return Ok(resultDto);
@@ -196,8 +207,8 @@ public class ActivityPeriodDto
 {
     public int activityPeriodId { get; set; }
     public int activityId { get; set; }
+    public int executorId { get; set; }
     public DateTime? startTime { get; set; } = null;
     public DateTime? stopTime { get; set; } = null;
     public TimeSpan? totalTime { get; set; } = null;
-    public long? totalSeconds { get; set; } = 0;
 }

@@ -54,6 +54,10 @@ public class TimeTrackerDbContext : DbContext
             entity.HasMany(e => e.Activities)
                 .WithOne(a => a.User)
                 .HasForeignKey(a => a.UserId);
+
+            entity.HasMany(e => e.ActivityPeriods)
+                 .WithOne(a => a.User)
+                 .HasForeignKey(a => a.ExecutorId);
         });
 
         modelBuilder.Entity<Activity>(entity =>
@@ -85,12 +89,16 @@ public class TimeTrackerDbContext : DbContext
             entity.Property(e => e.StartTime).IsRequired().HasColumnType("timestamp without time zone");
             entity.Property(e => e.StopTime).HasColumnType("timestamp without time zone").IsRequired(false);
             entity.Property(e => e.ActivityId).IsRequired();
+            entity.Property(e => e.ExecutorId);
             entity.Property(e => e.TotalTime).IsRequired(false);
-            entity.Property(e => e.TotalSeconds).IsRequired(false);
 
             entity.HasOne(e => e.Activity)
                 .WithMany(a => a.ActivityPeriods)
                 .HasForeignKey(e => e.ActivityId);
+
+            entity.HasOne(e => e.User)
+                .WithMany(a => a.ActivityPeriods)
+                .HasForeignKey(e => e.ExecutorId);
         });
 
         modelBuilder.Entity<Status>(entity =>
