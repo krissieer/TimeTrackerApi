@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using TimeTrackerApi.Controllers;
 using TimeTrackerApi.Models;
+using TimeTrackerApi.Services.ProjectActivityService;
 using TimeTrackerApi.Services.ProjectService;
 using TimeTrackerApi.Services.ProjectUserService;
 
@@ -15,12 +16,14 @@ namespace TimeTrackerApi.Controllers
     public class ProjectsController : ControllerBase
     {
         private readonly IProjectService projectService;
-        private readonly  IProjectUserService projectUserService;
+        private readonly IProjectUserService projectUserService;
+        private readonly IProjectActivityService projectActivityService;
 
-        public ProjectsController(IProjectService _projectService, IProjectUserService _projectUserService)
+        public ProjectsController(IProjectService _projectService, IProjectUserService _projectUserService, IProjectActivityService _projectActivityService)
         {
             projectService = _projectService;
             projectUserService = _projectUserService;
+            projectActivityService = _projectActivityService;
         }
 
         /// <summary>
@@ -106,7 +109,7 @@ namespace TimeTrackerApi.Controllers
         }
 
         /// <summary>
-        /// Обновление названия проекта
+        /// Обновление проекта: обновить название, закрыть проект
         /// </summary>
         /// <param name="dto"></param>
         /// <returns></returns>
@@ -171,7 +174,156 @@ namespace TimeTrackerApi.Controllers
                 StatusCode(500, "Failed to delete project due to server error.");
             return NoContent();
         }
-        //Удалить и реадктировать проект может только его создатель
+
+        /// <summary>
+        /// Получить пользователй проекта
+        /// </summary>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
+        [HttpGet("{projectId}/users")]
+        [Authorize]
+        public async Task<ActionResult> GetProjectUsers(int projectId)
+        {
+            var users = await projectUserService.GetUsersByProjectId(projectId);
+            if (!users.Any())
+            {
+                return NotFound($"No users found for project with ID {projectId}");
+            }
+            var result = users.Select(a => new ProjectUserDto
+            {
+                id = a.Id,
+                projectId = a.ProjectId,
+                userId = a.UserId,
+                isCreator = a.Creator
+            });
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Добавить пользователя в проект
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="projectId"></param>
+        /// <param name="isCreator"></param>
+        /// <returns></returns>
+        [HttpPost("user")]
+        [Authorize]
+        public async Task<ActionResult> AddProjectUser([FromBody] AddProjectUserDto dto)
+        {
+            var user = await projectUserService.AddProjectUser(dto.userId, dto.projectId, false);
+            if (user == null)
+            {
+                return Conflict("Project does not exist or the user is already assigned to this project.");
+            }
+            return Ok(new ProjectUserDto
+            {
+                id = user.Id,
+                userId = user.UserId,
+                projectId = user.ProjectId,
+            });
+        }
+
+        /// <summary>
+        /// Удалить пользователя из проекта
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
+        [HttpDelete("user/{projectId}/{userId}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteProjectUser(int projectId, int userId)
+        {
+            var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(user))
+                return Unauthorized("User not authenticated.");
+            int authorizedUserId = int.Parse(user);
+
+            var isCreator = await projectUserService.IsCreator(authorizedUserId, projectId);
+            if (!isCreator && userId != authorizedUserId)
+                return Conflict("You don't have access to delete this user.");
+
+            var success = await projectUserService.DeleteProjectUser(userId, projectId);
+            if (!success)
+                return StatusCode(500, "Failed to delete activity from project due to server error.");
+            return NoContent();
+        }
+
+
+        /// <summary>
+        /// Получить активности опредленного проекта
+        /// </summary>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
+        [HttpGet("{projectId}/activities")]
+        [Authorize]
+        public async Task<ActionResult> GetProjectActivities(int projectId)
+        {
+            var activities = await projectActivityService.GetActivitiesByProjectId(projectId);
+            if (!activities.Any() || activities == null)
+            {
+                return NotFound("No activities found for this project ");
+            }
+            var result = activities.Select(a => new ProjectActivityDto
+            {
+                id = a.Id,
+                activityId = a.ActivityId,
+                projectId = a.ProjectId
+            });
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Добавить Активность в Проект
+        /// </summary>
+        /// <param name="activityId"></param>
+        /// <param name="projectId"></param>
+        /// <returns></returns>
+        [HttpPost("activity")]
+        [Authorize]
+        public async Task<ActionResult> AddProjectActivity([FromBody] AddProjectActivityDto dto)
+        {
+            var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userID))
+                return Unauthorized("User not authenticated.");
+            int userId = int.Parse(userID);
+
+            var isCreator = await projectUserService.IsCreator(userId, dto.projectId);
+            if (!isCreator)
+                return Conflict("You don't have access to edit this project");
+
+            var result = await projectActivityService.AddProjectActivity(dto.activityId, dto.projectId);
+            if (result == null)
+                return Conflict("Activity already exists for this project or project does not exist");
+
+            var response = new ProjectActivityDto
+            {
+                id = result.Id,
+                activityId = result.ActivityId,
+                projectId = result.ProjectId
+            };
+            return Ok(response);
+        }
+
+        [HttpDelete("activity/{projectId}/{activityId}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteProjectActivity(int projectId, int activityId)
+        {
+            var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userID))
+                return Unauthorized("User not authenticated.");
+            int userId = int.Parse(userID);
+
+            var isCreator = await projectUserService.IsCreator(userId, projectId);
+            if (!isCreator)
+                return Conflict("You don't have access to delete this activity.");
+
+            var result = await projectActivityService.DeleteProjectActivity(activityId, projectId);
+            if (!result)
+                return StatusCode(500, "Failed to delete activity from project due to server error.");
+            return NoContent();
+        }
+
     }
 }
 
@@ -188,4 +340,31 @@ public class AddEditProjectDto
 {
     public bool closeProject { get; set; } = false;
     public string projectName { get; set; }
+}
+
+public class ProjectUserDto
+{
+    public int id { get; set; }
+    public int userId { get; set; }
+    public int projectId { get; set; }
+    public bool isCreator { get; set; }
+}
+
+public class AddProjectUserDto
+{
+    public int userId { get; set; }
+    public int projectId { get; set; }
+}
+
+public class ProjectActivityDto
+{
+    public int id { get; set; }
+    public int activityId { get; set; }
+    public int projectId { get; set; }
+}
+
+public class AddProjectActivityDto
+{
+    public int activityId { get; set; }
+    public int projectId { get; set; }
 }
