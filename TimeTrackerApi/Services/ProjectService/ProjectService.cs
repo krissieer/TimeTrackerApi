@@ -134,6 +134,14 @@ public class ProjectService: IProjectService
         if (project == null)
             throw new KeyNotFoundException($"Project with ID {projectId} not found.");
         project.FinishDate = DateTime.UtcNow.Date;
+
+        var projectactivities = await context.ProjectActivities.Where(a => a.ProjectId == projectId).ToListAsync();
+        for (int i = 0; i < projectactivities.Count; i++)
+        {
+            var activity = await context.Activities.FindAsync(projectactivities[i].ActivityId);
+            activity.StatusId = 3;
+        }    
+
         return await context.SaveChangesAsync() >= 1;
     }
 }
