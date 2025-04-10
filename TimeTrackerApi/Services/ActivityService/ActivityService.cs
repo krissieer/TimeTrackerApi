@@ -41,32 +41,6 @@ public class ActivityService: IActivityService
     }
 
     /// <summary>
-    /// Добавить активности по умолчанию
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <returns></returns>
-    public async Task<bool> AddDefaultActivities(int userId)
-    {
-        var activities = new List<Activity>();
-        string[] names = { "Работа", "Спорт", "Отдых" };
-        for (int i = 0; i < 3; i++)
-        {
-            if (await CheckActivityNameExistence(userId, names[i]))
-                return false;
-            var newAct = new Activity
-            {
-                Name = names[i],
-                UserId = userId,
-                ActiveFrom = DateTime.Now.Date,
-                StatusId = 1
-            };
-            activities.Add(newAct);
-        }
-        await context.Activities.AddRangeAsync(activities);
-        return await context.SaveChangesAsync() >= 1;
-    }
-
-    /// <summary>
     /// Добавить новую активность
     /// </summary>
     /// <param name="userId"></param>
@@ -183,17 +157,5 @@ public class ActivityService: IActivityService
 
         return await context.SaveChangesAsync() >= 1;
     }
-
-    ///// <summary>
-    ///// Проверка принадлежности активности пользователю
-    ///// </summary>
-    ///// <param name="activityId"></param>
-    ///// <param name="userId"></param>
-    ///// <returns></returns>
-    //public async Task<bool> IsOwner(int activityId, int userId)
-    //{
-    //    return await context.Activities
-    //        .AnyAsync(a => a.Id == activityId && a.UserId == userId);
-    //}
 }
 

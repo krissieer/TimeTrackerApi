@@ -100,6 +100,7 @@ public class ActivityPeriodService: IActivityPeriodService
             var newPeriod = new ActivityPeriod
             {
                 ActivityId = activityPeriod.ActivityId,
+                ExecutorId = activityPeriod.ExecutorId,
                 StartTime = DateTime.SpecifyKind(utcsecondStart, DateTimeKind.Unspecified),
                 StopTime = stopTime,
                 TotalTime = secondDuration,
@@ -118,12 +119,8 @@ public class ActivityPeriodService: IActivityPeriodService
         var result = await AddActivityPeriod(activityId, userId);
         if (result is null)
             return null;
-        var activity = await context.Activities.FindAsync(activityId);
 
-        if (activity is not null && activity.StatusId == 2)
-        {
-            throw new Exception("Activity is already started");
-        }
+        var activity = await context.Activities.FindAsync(activityId);
         activity.StatusId = 2;
         await context.SaveChangesAsync();
         return result;
@@ -242,28 +239,28 @@ public class ActivityPeriodService: IActivityPeriodService
     /// <param name="firstdata"></param>
     /// <param name="seconddata"></param>
     /// <returns></returns>
-    public async Task<List<ActivityPeriod>> GetStatistic(int activityId, DateTime? firstdata = null, DateTime? seconddata = null)
+    public async Task<List<ActivityPeriod>> GetStatistic(int activityId = 0, int userId = 0, DateTime? firstdata = null, DateTime? seconddata = null)
     {
         var query = context.ActivityPeriods.AsQueryable();
+        if (activityId != 0)
+            query = query.Where(a => a.ActivityId == activityId);
+        if (userId != 0)
+            query = query.Where(a => a.ExecutorId == userId);
 
         // статистика за промежуток времени
         if (firstdata.HasValue && seconddata.HasValue)
         {
             var startDate = firstdata.Value.Date;
             var endDate = seconddata.Value.Date;
-            query = query.Where(a => a.ActivityId == activityId && a.StopTime >= startDate && a.StopTime < endDate.AddDays(1));
+            query = query.Where(a => a.StopTime >= startDate && a.StopTime < endDate.AddDays(1));
         }
 
         // статистика за определенный день
         else if (firstdata.HasValue)
         {
             var targetDate = firstdata.Value.Date;
-            query = query.Where(a => a.ActivityId == activityId && a.StopTime >= targetDate && a.StopTime < targetDate.AddDays(1));
+            query = query.Where(a => a.StopTime >= targetDate && a.StopTime < targetDate.AddDays(1));
         }
-
-        // за весь период
-        else
-            query = query.Where(a => a.ActivityId == activityId);
 
         return await query.ToListAsync();
     }

@@ -7,6 +7,7 @@ using TimeTrackerApi.Services.ActivityService;
 using System;
 using System.Text.Json.Serialization;
 using System.Security.Claims;
+using TimeTrackerApi.Services.UserService;
 
 namespace TimeTrackerApi.Controllers;
 
@@ -16,11 +17,13 @@ public class ActivityPeriodsController : ControllerBase
 {
     private readonly IActivityPeriodService activityPeriodService;
     private readonly IActivityService activityService;
+    private readonly IUserService userService;
 
-    public ActivityPeriodsController(IActivityPeriodService _userService,  IActivityService _activityService)
+    public ActivityPeriodsController(IActivityPeriodService _activityPeriodService,  IActivityService _activityService, IUserService _userService)
     {
-        activityPeriodService = _userService;
+        activityPeriodService = _activityPeriodService;
         activityService = _activityService;
+        userService = _userService;
     }
 
     /// <summary>
@@ -32,28 +35,35 @@ public class ActivityPeriodsController : ControllerBase
     /// <returns></returns>
     [HttpGet]
     [Authorize]
-    public async Task<ActionResult> GetStatistic(int activityId, DateTime? data1 = null, DateTime? data2 = null)
+    public async Task<ActionResult> GetStatistic(int activityId = 0, int userId = 0, DateTime? data1 = null, DateTime? data2 = null)
     {
-        var activityExists = await activityService.GetActivityById(activityId);
-        if (activityExists == null)
+        if (activityId != 0)
         {
-            return NotFound($"Activity with ID {activityId} not found.");
+            var activityExists = await activityService.GetActivityById(activityId);
+            if (activityExists == null)
+                return NotFound($"Activity with ID {activityId} not found.");
         }
 
+        if (userId != 0)
+        {
+            var userExist = await userService.GetUserById(userId);
+            if (userExist == null)
+                return NotFound($"User with ID {userId} not found.");
+        }
+        
         var statistic = new List<ActivityPeriod>();
         TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
         if (data1.HasValue && data2.HasValue) // промежуток времени
-            statistic = await activityPeriodService.GetStatistic(activityId, data1, data2);
+            statistic = await activityPeriodService.GetStatistic(activityId, userId, data1, data2);
 
         // определенный день
         else if (data1.HasValue && !data2.HasValue)
-            statistic = await activityPeriodService.GetStatistic(activityId, data1);
+            statistic = await activityPeriodService.GetStatistic(activityId, userId, data1);
         else if (!data1.HasValue && data2.HasValue)
-            statistic = await activityPeriodService.GetStatistic(activityId, data2);
-
+            statistic = await activityPeriodService.GetStatistic(activityId, userId, data2);
         else
-            statistic = await activityPeriodService.GetStatistic(activityId); //весь период
+            statistic = await activityPeriodService.GetStatistic(activityId, userId); //весь период
 
         if (!statistic.Any())
             return Ok(new List<ActivityPeriod>());

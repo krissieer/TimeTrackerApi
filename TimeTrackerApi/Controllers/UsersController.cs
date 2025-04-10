@@ -196,6 +196,14 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<ActionResult> EditUser([FromBody] EditUserDto dto, int userId)
     {
+        var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userID))
+            return Unauthorized("User not authenticated.");
+        int authorizedUserId = int.Parse(userID);
+
+        if (authorizedUserId != userId)
+            return Conflict("You do not have an access for edit user info");
+
         bool updated = false;
         if (dto.updateName && dto.updatePassword)
             updated = await userService.UpdateUser(userId, dto.userName, dto.password);
@@ -220,6 +228,14 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteUser(int userId)
     {
+        var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userID))
+            return Unauthorized("User not authenticated.");
+        int authorizedUserId = int.Parse(userID);
+
+        if (authorizedUserId != userId)
+            return Conflict("You do not have an access for delete user");
+
         var success = await userService.DeleteUser(userId);
         if (!success)
             StatusCode(500, "Failed to delete user due to server error.");
