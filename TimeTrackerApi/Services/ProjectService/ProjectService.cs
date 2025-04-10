@@ -65,7 +65,7 @@ public class ProjectService: IProjectService
             {
                 Name = name,
                 AccessKey = accessKey,
-                CreationDate = DateTime.UtcNow,
+                CreationDate = DateTime.UtcNow.Date,
             };
             await context.Projects.AddAsync(project);
             await context.SaveChangesAsync();

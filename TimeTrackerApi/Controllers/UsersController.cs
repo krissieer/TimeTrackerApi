@@ -70,6 +70,24 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("by-chatId/{chatId}")]
+    public async Task<ActionResult> GetUserByChatId(long chatId)
+    {
+        var user = await userService.GetUserByChatId(chatId);
+        if (user is null)
+        {
+            return NotFound($"User with ChatID {chatId} not found.");
+        }
+        var result = new UserDto
+        {
+            id = user.Id,
+            chatId = user.ChatId,
+            name = user.Name
+        };
+
+        return Ok(result);
+    }
+
     /// <summary>
     /// Получить активности пользователя
     /// </summary>
@@ -252,6 +270,12 @@ public class AuthDto
     [Required]
     [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
     public string password { get; set; } = string.Empty;
+    public int chatId { get; set; } = 0;
+}
+
+public class AuthTelegramDto
+{
+    public string name { get; set; }
     public int chatId { get; set; } = 0;
 }
 

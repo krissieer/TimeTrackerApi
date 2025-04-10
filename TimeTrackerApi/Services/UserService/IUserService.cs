@@ -8,6 +8,8 @@ public interface IUserService
 
     Task<User> GetUserById(int id);
 
+    Task<User> GetUserByChatId(long chatId);
+
     Task<bool> CheckUserNameExistence(string name);
 
     Task<string> Registration(string name, string password, int chatId = 0);

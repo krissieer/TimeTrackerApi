@@ -47,6 +47,19 @@ public class UserService:IUserService
     }
 
     /// <summary>
+    /// Получить данные пользователя по chatId
+    /// </summary>
+    /// <param name="chatId"></param>
+    /// <returns></returns>
+    public async Task<User> GetUserByChatId(long chatId)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.ChatId == chatId);
+        if (user == null)
+            return null;
+        return user;
+    }
+
+    /// <summary>
     /// Регистрация пользователя
     /// </summary>
     /// <param name="name"></param>

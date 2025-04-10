@@ -2,12 +2,14 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using System.Security.Claims;
 using TimeTrackerApi.Controllers;
 using TimeTrackerApi.Models;
 using TimeTrackerApi.Services.ProjectActivityService;
 using TimeTrackerApi.Services.ProjectService;
 using TimeTrackerApi.Services.ProjectUserService;
+using TimeTrackerApi;
 
 namespace TimeTrackerApi.Controllers
 {
@@ -83,29 +85,25 @@ namespace TimeTrackerApi.Controllers
         /// <returns></returns>
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult> AddProject([FromBody] AddEditProjectDto dto)
+        public async Task<ActionResult> AddProject([FromBody] AddProjectDto dto)
         {
             var USER = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(USER))
                 return Unauthorized("User not authenticated.");
             int user_Id = int.Parse(USER);
 
-            if (!dto.closeProject)
+            var project = await projectService.AddProject(dto.projectName); //добавление пользователя в Projects
+            if (project == null)
             {
-                var project = await projectService.AddProject(dto.projectName); //добавление пользователя в Projects
-                if (project == null)
-                {
-                    return BadRequest();
-                }
-                var projectUser = await projectUserService.AddProjectUser(user_Id, project.Id, true); //Добавление пользователя в ProjectUsers
-                if (projectUser == null)
-                {
-                    return Conflict("Project does not exist or the user is already assigned to this project.");
-                }
-
-                return Ok(new { AccessKey = project.AccessKey });
+                return BadRequest();
             }
-            return BadRequest();
+            var projectUser = await projectUserService.AddProjectUser(user_Id, project.Id, true); //Добавление пользователя в ProjectUsers
+            if (projectUser == null)
+            {
+                return Conflict("Project does not exist or the user is already assigned to this project.");
+            }
+
+            return Ok(new { AccessKey = project.AccessKey });
         }
 
         /// <summary>
@@ -115,7 +113,7 @@ namespace TimeTrackerApi.Controllers
         /// <returns></returns>
         [HttpPut("{projectId}")]
         [Authorize]
-        public async Task<ActionResult> UpdateProject([FromBody] AddEditProjectDto dto, int projectId)
+        public async Task<ActionResult> UpdateProject([FromBody] EditProjectDto dto, int projectId)
         {
             var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userID))
@@ -134,21 +132,25 @@ namespace TimeTrackerApi.Controllers
                 else
                     return BadRequest("Failed to close project");
             }
-                
-            var project = await projectService.UpdateProject(projectId, dto.projectName);
-            if (project == null)
+
+            if (dto.updateName)
             {
-                return NotFound($"Project with ID {projectId} not found.");
+                var project = await projectService.UpdateProject(projectId, dto.projectName);
+                if (project == null)
+                {
+                    return NotFound($"Project with ID {projectId} not found.");
+                }
+                var result = new ProjectDto
+                {
+                    projectId = project.Id,
+                    projectName = project.Name,
+                    projectKey = project.AccessKey,
+                    creationDate = project.CreationDate,
+                    finishDate = project.FinishDate,
+                };
+                return Ok(result);
             }
-            var result = new ProjectDto
-            {
-                projectId = project.Id,
-                projectName = project.Name,
-                projectKey = project.AccessKey,
-                creationDate = project.CreationDate,
-                finishDate = project.FinishDate,
-            };
-            return Ok(result);
+            return BadRequest("No update action was specified.");
         }
 
         /// <summary>
@@ -332,13 +334,19 @@ public class ProjectDto
     public int projectId { get; set; }
     public string projectName { get; set; }
     public string projectKey { get; set; }
-    public DateTime creationDate { get; set; }
+    public DateTime? creationDate { get; set; }
     public DateTime? finishDate { get; set; }
 }
 
-public class AddEditProjectDto
+public class EditProjectDto
 {
     public bool closeProject { get; set; } = false;
+    public bool updateName { get; set; } = false;
+    public string projectName { get; set; }
+}
+
+public class AddProjectDto
+{
     public string projectName { get; set; }
 }
 

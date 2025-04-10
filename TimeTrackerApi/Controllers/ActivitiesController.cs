@@ -92,21 +92,6 @@ public class ActivitiesController : ControllerBase
         return Ok(result);
     }
 
-    ///// <summary>
-    ///// Добавить дефолтные активности
-    ///// </summary>
-    ///// <param name="userId"></param>
-    ///// <returns></returns>
-    //[HttpPost("add-defualt")]
-    //[Authorize]
-    //public async Task<IActionResult> AddDefaultActivities(int userId)
-    //{
-    //    bool result = await activityService.AddDefaultActivities(userId);
-    //    if (!result)
-    //        return BadRequest("Default activities could not be added");
-    //    return Ok(result);
-    //}
-
     /// <summary>
     /// Обновить активность: изменить имя или изменить статус
     /// </summary>
