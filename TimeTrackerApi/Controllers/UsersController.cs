@@ -97,13 +97,13 @@ public class UsersController : ControllerBase
     /// <returns></returns>
     [HttpGet("{userId}/activities")]
     [Authorize]
-    public async Task<ActionResult> GetActivities(int userId, [FromQuery] bool? onlyArchived, [FromQuery] bool? onlyActive)
+    public async Task<ActionResult> GetActivities(int userId, [FromQuery] bool? onlyArchived, [FromQuery] bool? onlyInProcces, [FromQuery] bool? onlyActive)
     {
-        if (onlyArchived == true && onlyActive == true)
+        if (onlyArchived == true && onlyActive == true || onlyArchived == true && onlyInProcces == true)
         {
             return BadRequest("Cannot request both archived and active activities at the same time.");
         }
-        var activities = await activityService.GetActivities(userId, onlyActive ?? false, onlyArchived ?? false);
+        var activities = await activityService.GetActivities(userId, onlyActive ?? true, onlyInProcces ?? false, onlyArchived ?? false);
         if (!activities.Any())
         {
             return Ok(new List<ActivityDto>());

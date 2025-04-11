@@ -19,16 +19,28 @@ public class ActivityService: IActivityService
     /// <param name="userId"></param>
     /// <param name="activeOnly"></param>
     /// <returns></returns>
-    public async Task<List<Activity>> GetActivities(int userId, bool activeOnly = true, bool archivedOnly = false)
+    public async Task<List<Activity>> GetActivities(int userId, bool activeOnly = true, bool inProcessOnly = false, bool archivedOnly = false)
     {
         var query = context.Activities.AsQueryable();
 
         query = query.Where(a => a.UserId == userId);
 
-        if (activeOnly && !archivedOnly)
-            query = query.Where(a => a.StatusId != 3);
-        else if (!activeOnly && archivedOnly)
+        if (activeOnly && !inProcessOnly && !archivedOnly)
+            query = query.Where(a => a.StatusId == 1);
+
+        else if (!activeOnly && inProcessOnly && !archivedOnly)
+            query = query.Where(a => a.StatusId == 2);
+
+        else if (!activeOnly && !inProcessOnly && archivedOnly)
             query = query.Where(a => a.StatusId == 3);
+
+        else if (activeOnly && inProcessOnly && !archivedOnly)
+            query = query.Where(a => a.StatusId != 3);
+
+        //if (activeOnly && !archivedOnly)
+        //    query = query.Where(a => a.StatusId != 3);
+        //else if (!activeOnly && archivedOnly)
+        //    query = query.Where(a => a.StatusId == 3);
 
         return await query.ToListAsync();
     }
