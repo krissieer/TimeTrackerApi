@@ -80,7 +80,7 @@ public class ActivityPeriodsController : ControllerBase
             totalTime =  a.TotalTime,
         });
 
-        return Ok(new { ActivityPeriods = result });
+        return Ok(result);
     }
 
     /// <summary>
