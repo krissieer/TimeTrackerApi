@@ -97,13 +97,13 @@ public class UsersController : ControllerBase
     /// <returns></returns>
     [HttpGet("{userId}/activities")]
     [Authorize]
-    public async Task<ActionResult> GetActivities(int userId, [FromQuery] bool? onlyArchived, [FromQuery] bool? onlyInProcces, [FromQuery] bool? onlyActive)
+    public async Task<ActionResult> GetActivities(int userId, [FromQuery] bool? onlyArchived, [FromQuery] bool? onlyInProcess, [FromQuery] bool? onlyActive)
     {
-        if (onlyArchived == true && onlyActive == true || onlyArchived == true && onlyInProcces == true)
+        if (onlyArchived == true && onlyActive == true || onlyArchived == true && onlyInProcess == true)
         {
             return BadRequest("Cannot request both archived and active activities at the same time.");
         }
-        var activities = await activityService.GetActivities(userId, onlyActive ?? true, onlyInProcces ?? false, onlyArchived ?? false);
+        var activities = await activityService.GetActivities(userId, onlyActive ?? true, onlyInProcess ?? false, onlyArchived ?? false);
         if (!activities.Any())
         {
             return Ok(new List<ActivityDto>());
@@ -153,25 +153,28 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> RegistrtationLogin([FromBody] AuthDto dto)
     {
-        if (!ModelState.IsValid) // имя и пароль не пустые
+        if (!ModelState.IsValid) 
         {
             return BadRequest(ModelState);
         }
         string token;
-        if ( dto.isNewUser )
+        try
         {
-            token = await userService.Registration(dto.name, dto.password, dto.chatId);
-            if (string.IsNullOrEmpty(token))
-                return Conflict("This username is already in use");
+            if (dto.isNewUser)
+            {
+                token = await userService.Registration(dto.name, dto.password, dto.chatId);
+                if (string.IsNullOrEmpty(token))
+                    return Conflict("This username is already in use");
+            }
+            else
+            {
+                token = await userService.Login(dto.name, dto.password);
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized("Username or password is wrong");
+            }
+            return Ok(new { Token = token });
         }
-        else
-        {
-            token = await userService.Login(dto.name, dto.password);
-            if (string.IsNullOrEmpty(token))
-                return Unauthorized("Username or password is wrong");
-        }
-
-        return Ok(new { Token = token });
+        catch (Exception ex) { return BadRequest(ex); }  
     }
 
     /// <summary>
@@ -214,32 +217,36 @@ public class UsersController : ControllerBase
     [Authorize]
     public async Task<ActionResult> EditUser([FromBody] EditUserDto dto, int userId)
     {
-        var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userID))
-            return Unauthorized("User not authenticated.");
-        int authorizedUserId = int.Parse(userID);
-
-        if (authorizedUserId != userId)
-            return Conflict("You do not have an access for edit user info");
-
-        bool updated = false;
-        if (dto.updateName && dto.updatePassword)
-            updated = await userService.UpdateUser(userId, dto.userName, dto.password);
-        else if (dto.updateName && !dto.updatePassword)
-            updated = await userService.UpdateUser(userId, dto.userName);
-        else if (!dto.updateName && dto.updatePassword)
-            updated = await userService.UpdateUser(userId, null, dto.password);
-        if (!updated)
-            StatusCode(500, "Failed to edit user due to server error.");
-
-        var user = await userService.GetUserById(userId);
-        var result = new UserDto
+        try
         {
-            id = user.Id,
-            chatId = user.ChatId,
-            name = user.Name
-        };
-        return Ok(result);
+            var userID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userID))
+                return Unauthorized("User not authenticated.");
+            int authorizedUserId = int.Parse(userID);
+
+            if (authorizedUserId != userId)
+                return Conflict("You do not have an access for edit user info");
+
+            bool updated = false;
+            if (dto.updateName && dto.updatePassword)
+                updated = await userService.UpdateUser(userId, dto.userName, dto.password);
+            else if (dto.updateName && !dto.updatePassword)
+                updated = await userService.UpdateUser(userId, dto.userName);
+            else if (!dto.updateName && dto.updatePassword)
+                updated = await userService.UpdateUser(userId, null, dto.password);
+            if (!updated)
+                StatusCode(500, "Failed to edit user due to server error.");
+
+            var user = await userService.GetUserById(userId);
+            var result = new UserDto
+            {
+                id = user.Id,
+                chatId = user.ChatId,
+                name = user.Name
+            };
+            return Ok(result);
+        }
+        catch (Exception ex) { return BadRequest(ex.Message); }
     }
 
     [HttpDelete("{userId}")]
@@ -273,11 +280,11 @@ public class AuthDto
     public int chatId { get; set; } = 0;
 }
 
-public class AuthTelegramDto
-{
-    public string name { get; set; }
-    public int chatId { get; set; } = 0;
-}
+//public class AuthTelegramDto
+//{
+//    public string name { get; set; }
+//    public int chatId { get; set; } = 0;
+//}
 
 public class UserDto
 {
@@ -290,7 +297,7 @@ public class ActivityDto
 {
     public int id { get; set; }
     public string name { get; set; }
-    public DateTime activeFrom { get; set; }
+    public DateTime? activeFrom { get; set; }
     public int userId { get; set; }
     public int statusId { get; set; }
 }

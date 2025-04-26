@@ -50,10 +50,7 @@ public class PasswordHasher
     public static bool VerifyPassword(string password, string hashedPassword)
     {
         var parts = hashedPassword.Split(':');
-        if (parts.Length != 2)
-        {
-            return false;
-        }
+        if (parts.Length != 2) return false;
 
         var salt = Convert.FromBase64String(parts[0]);
         var storedHash = parts[1];

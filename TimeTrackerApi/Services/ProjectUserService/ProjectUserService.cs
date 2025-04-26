@@ -75,7 +75,7 @@ public class ProjectUserService: IProjectUserService
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.UserId == userId && a.ProjectId == projectId);
         if (projectUser == null)
-            throw new KeyNotFoundException($"User with ID {userId} not found in project with ID {projectId}.");
+            throw new Exception($"User with ID {userId} not found in project with ID {projectId}.");
         context.ProjectUsers.Remove(projectUser);
         return await context.SaveChangesAsync() >= 1;
     }

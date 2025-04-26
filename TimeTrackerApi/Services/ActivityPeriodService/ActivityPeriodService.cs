@@ -119,8 +119,9 @@ public class ActivityPeriodService: IActivityPeriodService
         var result = await AddActivityPeriod(activityId, userId);
         if (result is null)
             return null;
-
         var activity = await context.Activities.FindAsync(activityId);
+        if (activity.StatusId == 2)
+            throw new Exception("Activity was already started");
         activity.StatusId = 2;
         await context.SaveChangesAsync();
         return result;
@@ -136,7 +137,6 @@ public class ActivityPeriodService: IActivityPeriodService
         var result = await SetStopTime(activityId, userId);
         if (result is null)
             throw new Exception("Failed to stop");
-
         var activity = await context.Activities.FindAsync(activityId);
         activity.StatusId = 1;
         await context.SaveChangesAsync();

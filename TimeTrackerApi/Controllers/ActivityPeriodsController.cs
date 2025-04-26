@@ -8,6 +8,7 @@ using System;
 using System.Text.Json.Serialization;
 using System.Security.Claims;
 using TimeTrackerApi.Services.UserService;
+using System.Globalization;
 
 namespace TimeTrackerApi.Controllers;
 
@@ -50,7 +51,7 @@ public class ActivityPeriodsController : ControllerBase
             if (userExist == null)
                 return NotFound($"User with ID {userId} not found.");
         }
-        
+
         var statistic = new List<ActivityPeriod>();
         TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
@@ -93,40 +94,44 @@ public class ActivityPeriodsController : ControllerBase
     [Authorize]
     public async Task<ActionResult> StartStopTracking([FromBody] StartStopTrackingDto dto)
     {
-        var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(user))
-            return Unauthorized("User not authenticated.");
-        int authorizedUserId = int.Parse(user);
-
-        var activityExists = await activityService.GetActivityById(dto.activityId);
-        if (activityExists == null)
+        try
         {
-            return NotFound($"Activity with ID {dto.activityId} not found.");
+            var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(user))
+                return Unauthorized("User not authenticated.");
+            int authorizedUserId = int.Parse(user);
+
+            var activityExists = await activityService.GetActivityById(dto.activityId);
+            if (activityExists == null)
+            {
+                return NotFound($"Activity with ID {dto.activityId} not found.");
+            }
+            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
+
+            List<ActivityPeriod> actPeriod = dto.isStarted
+                ? new List<ActivityPeriod> { await activityPeriodService.StartTracking(dto.activityId, authorizedUserId) }
+                : await activityPeriodService.StopTracking(dto.activityId, authorizedUserId);
+
+            if (actPeriod is null || !actPeriod.Any())
+            {
+                return BadRequest(dto.isStarted ? "Failed to start tracking." : "Failed to stop tracking.");
+            }
+
+            var response = actPeriod.Select(actPeriod => new ActivityPeriodDto
+            {
+                activityPeriodId = actPeriod.Id,
+                activityId = actPeriod.ActivityId,
+                executorId = actPeriod.ExecutorId,
+                startTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(actPeriod.StartTime, DateTimeKind.Utc), tz),
+                stopTime = actPeriod.StopTime.HasValue
+                        ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(actPeriod.StopTime.Value, DateTimeKind.Utc), tz)
+                        : (DateTime?)null,
+                totalTime = actPeriod.TotalTime,
+            }).ToList();
+
+            return Ok(response);
         }
-        TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
-
-        List<ActivityPeriod> actPeriod = dto.isStarted
-            ? new List<ActivityPeriod> { await activityPeriodService.StartTracking(dto.activityId, authorizedUserId) }
-            : await activityPeriodService.StopTracking(dto.activityId, authorizedUserId);
-
-        if (actPeriod is null || !actPeriod.Any())
-        {
-            return BadRequest(dto.isStarted ? "Failed to start tracking." : "Failed to stop tracking.");
-        }
-
-        var response = actPeriod.Select(actPeriod => new ActivityPeriodDto
-        {
-            activityPeriodId = actPeriod.Id,
-            activityId = actPeriod.ActivityId,
-            executorId = actPeriod.ExecutorId,
-            startTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(actPeriod.StartTime, DateTimeKind.Utc), tz),
-            stopTime = actPeriod.StopTime.HasValue
-                    ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(actPeriod.StopTime.Value, DateTimeKind.Utc), tz)
-                    : (DateTime?)null,
-            totalTime = actPeriod.TotalTime,
-        }).ToList();
-
-        return Ok(response);
+        catch (Exception ex) { return BadRequest(ex.Message); }
     }
 
     /// <summary>
@@ -139,44 +144,50 @@ public class ActivityPeriodsController : ControllerBase
     [Authorize]
     public async Task<ActionResult> UpdateTime([FromBody] UpdatePeriodDto dto, int activityPeriodId)
     {
-        var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(user))
-            return Unauthorized("User not authenticated.");
-        int authorizedUserId = int.Parse(user);
-
-        if (!dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
-            return BadRequest("At least one of newStartTime or newStopTime must has value.");
-
-        var activityPeriod = await activityPeriodService.GetActivityPeriodById(activityPeriodId);
-        if (activityPeriod is null)
-            return NotFound($"ActivityPeriod with ID {activityPeriodId} not found.");
-
-        List<ActivityPeriod>? result = null;
-
-        if (dto.newStartTime.HasValue && dto.newStopTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, authorizedUserId, dto.newStartTime, dto.newStopTime);
-
-        else if (dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, authorizedUserId, dto.newStartTime);
-
-        else if (dto.newStopTime.HasValue && !dto.newStartTime.HasValue)
-            result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, authorizedUserId, null, dto.newStopTime);
-
-        if (result is null)
-            return BadRequest("You can not edit this record");
-
-        TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
-        var resultDto = result.Select(period => new ActivityPeriodDto
+        try
         {
-            activityPeriodId = period.Id,
-            activityId = period.ActivityId,
-            executorId = period.ExecutorId,
-            startTime = TimeZoneInfo.ConvertTimeFromUtc(period.StartTime, tz),
-            stopTime = period.StopTime.HasValue ? TimeZoneInfo.ConvertTimeFromUtc(period.StopTime.Value, tz) : null,
-            totalTime = period.TotalTime,
-        }).ToList();
+            var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(user))
+                return Unauthorized("User not authenticated.");
+            int authorizedUserId = int.Parse(user);
 
-        return Ok(resultDto);
+            if (!dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
+                return BadRequest("Time has an invalid foramt or it is null");
+
+            var activityPeriod = await activityPeriodService.GetActivityPeriodById(activityPeriodId);
+            if (activityPeriod is null)
+                return NotFound($"ActivityPeriod with ID {activityPeriodId} not found.");
+
+            List<ActivityPeriod>? result = null;
+
+            if (dto.newStartTime.HasValue && dto.newStopTime.HasValue)
+                result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, authorizedUserId, dto.newStartTime, dto.newStopTime);
+
+            else if (dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
+                result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, authorizedUserId, dto.newStartTime);
+
+            else if (dto.newStopTime.HasValue && !dto.newStartTime.HasValue)
+                result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, authorizedUserId, null, dto.newStopTime);
+
+            if (result is null)
+                return BadRequest("You can not edit this record");
+
+            TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
+            var resultDto = result.Select(period => new ActivityPeriodDto
+            {
+                activityPeriodId = period.Id,
+                activityId = period.ActivityId,
+                executorId = period.ExecutorId,
+                startTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(period.StartTime, DateTimeKind.Utc), tz),
+                stopTime = period.StopTime.HasValue 
+                        ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(period.StopTime.Value, DateTimeKind.Utc), tz)
+                        : (DateTime?)null,
+                totalTime = period.TotalTime,
+            }).ToList();
+
+            return Ok(resultDto);
+        }
+        catch (Exception ex) { return BadRequest(ex.Message); }
     }
 
     /// <summary>

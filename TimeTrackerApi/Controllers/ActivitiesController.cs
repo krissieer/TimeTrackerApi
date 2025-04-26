@@ -87,8 +87,8 @@ public class ActivitiesController : ControllerBase
         bool result = await activityService.AddActivity(dto.userId, dto.activityName);
 
         if (!result)
-            return Conflict("Activity with the same activity name already exists");
-       
+            return Conflict("Activity with the same name already exists");
+
         return Ok(result);
     }
 
@@ -101,35 +101,39 @@ public class ActivitiesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdateActivity([FromBody] UpdateActivityDto dto, int activityId)
     {
-        if (dto.updateName && string.IsNullOrWhiteSpace(dto.newName))
+        try
         {
-            return BadRequest("New name must be provided when updating the name.");
-        }
+            if (dto.updateName && string.IsNullOrWhiteSpace(dto.newName))
+            {
+                return BadRequest("New name must be provided when updating the name.");
+            }
 
-        var activity = await activityService.GetActivityById(activityId);
-        if (activity == null)
-        {
-            return NotFound($"Activity with ID {activityId} not found.");
-        }
+            var activity = await activityService.GetActivityById(activityId);
+            if (activity == null)
+            {
+                return NotFound($"Activity with ID {activityId} not found.");
+            }
 
-        bool result = false;
-        if (dto.updateName)
-        {
-            result = await activityService.UpdateActivityName(activityId, dto.newName);
-        }
-        if (activity.StatusId != 3 && dto.archived)
-        {
-            result = await activityService.ChangeStatus(activityId, 3);
-        }
-        if (activity.StatusId != 1 && !dto.archived)
-        {
-            result = await activityService.ChangeStatus(activityId, 1);
-        }
+            bool result = false;
+            if (dto.updateName)
+            {
+                result = await activityService.UpdateActivityName(activityId, dto.newName);
+            }
+            if (activity.StatusId != 3 && dto.archived)
+            {
+                result = await activityService.ChangeStatus(activityId, 3);
+            }
+            if (activity.StatusId != 1 && !dto.archived)
+            {
+                result = await activityService.ChangeStatus(activityId, 1);
+            }
 
-        if (!result)
-            return StatusCode(500, "Failed to update activity due to server error.");
+            if (!result)
+                return StatusCode(500, "Failed to update activity due to server error.");
 
-        return Ok(result);
+            return Ok(result);
+        }
+        catch (Exception ex) { return BadRequest(ex.Message); }
     }
 
     /// <summary>

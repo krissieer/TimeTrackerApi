@@ -12,5 +12,4 @@ public class User
     public ICollection<Activity> Activities { get; set; }
     public ICollection<ProjectUser> ProjectUsers { get; set; }
     public ICollection<ActivityPeriod> ActivityPeriods { get; set; }
-
 }

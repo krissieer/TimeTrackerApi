@@ -213,6 +213,15 @@ namespace TimeTrackerApi.Controllers
         [Authorize]
         public async Task<ActionResult> AddProjectUser([FromBody] AddProjectUserDto dto)
         {
+            var currentUser = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(currentUser))
+                return Unauthorized("User not authenticated.");
+            int authorizedUserId = int.Parse(currentUser);
+
+            var isCreator = await projectUserService.IsCreator(authorizedUserId, dto.projectId);
+            if (!isCreator && dto.userId != authorizedUserId)
+                return Conflict("You don't have access to add user in project.");
+
             var user = await projectUserService.AddProjectUser(dto.userId, dto.projectId, false);
             if (user == null)
             {
@@ -236,19 +245,23 @@ namespace TimeTrackerApi.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteProjectUser(int projectId, int userId)
         {
-            var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(user))
-                return Unauthorized("User not authenticated.");
-            int authorizedUserId = int.Parse(user);
+            try
+            {
+                var user = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(user))
+                    return Unauthorized("User not authenticated.");
+                int authorizedUserId = int.Parse(user);
 
-            var isCreator = await projectUserService.IsCreator(authorizedUserId, projectId);
-            if (!isCreator && userId != authorizedUserId)
-                return Conflict("You don't have access to delete this user.");
+                var isCreator = await projectUserService.IsCreator(authorizedUserId, projectId);
+                if (!isCreator && userId != authorizedUserId)
+                    return Conflict("You don't have access to delete this user.");
 
-            var success = await projectUserService.DeleteProjectUser(userId, projectId);
-            if (!success)
-                return StatusCode(500, "Failed to delete activity from project due to server error.");
-            return NoContent();
+                var success = await projectUserService.DeleteProjectUser(userId, projectId);
+                if (!success)
+                    return StatusCode(500, "Failed to delete activity from project due to server error.");
+                return NoContent();
+            }
+            catch (Exception ex) { return BadRequest(ex.Message); }
         }
 
 

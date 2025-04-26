@@ -117,6 +117,14 @@ public class UserService:IUserService
         }
     }
 
+    /// <summary>
+    /// Обновление данные о пользователе
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="newName"></param>
+    /// <param name="newPassword"></param>
+    /// <returns></returns>
+    /// <exception cref="KeyNotFoundException"></exception>
     public async Task<bool> UpdateUser(int userId, string? newName = null, string? newPassword = null)
     {
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
@@ -129,6 +137,8 @@ public class UserService:IUserService
             {
                 user.Name = newName;
             }
+            else
+                throw new Exception("This username is already in use");
         }
         if (newPassword is not null)
         {
@@ -138,6 +148,12 @@ public class UserService:IUserService
         return await context.SaveChangesAsync() >= 1;
     }
 
+    /// <summary>
+    /// Удаление пользователя
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    /// <exception cref="KeyNotFoundException"></exception>
     public async Task<bool> DeleteUser(int id)
     {
         var user = await context.Users

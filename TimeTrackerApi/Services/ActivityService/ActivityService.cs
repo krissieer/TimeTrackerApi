@@ -37,11 +37,6 @@ public class ActivityService: IActivityService
         else if (activeOnly && inProcessOnly && !archivedOnly)
             query = query.Where(a => a.StatusId != 3);
 
-        //if (activeOnly && !archivedOnly)
-        //    query = query.Where(a => a.StatusId != 3);
-        //else if (!activeOnly && archivedOnly)
-        //    query = query.Where(a => a.StatusId == 3);
-
         return await query.ToListAsync();
     }
 
@@ -96,32 +91,25 @@ public class ActivityService: IActivityService
     /// <exception cref="Exception"></exception>
     public async Task<bool> UpdateActivityName(int activityId, string newname)
     {
-        try
+        if (string.IsNullOrWhiteSpace(newname))
         {
-            if (string.IsNullOrWhiteSpace(newname))
-            {
-                throw new Exception("New name is empty");
-            }    
-
-            var activity = await context.Activities.FirstOrDefaultAsync(a => a.Id == activityId);
-            if (activity == null)
-            {
-                throw new Exception("Activity not found.");
-            }
-
-            var user = activity.UserId;
-            if (await CheckActivityNameExistence(user, newname))
-            {
-                throw new Exception("Username is already exist");
-            }
-
-            activity.Name = newname;
-            return await context.SaveChangesAsync() >= 1;
+            throw new Exception("New name is empty");
         }
-        catch (Exception ex)
+
+        var activity = await context.Activities.FirstOrDefaultAsync(a => a.Id == activityId);
+        if (activity == null)
         {
-            throw new Exception($"Error while updating activity name: {ex.Message}");
+            throw new Exception("Activity not found.");
         }
+
+        var user = activity.UserId;
+        if (await CheckActivityNameExistence(user, newname))
+        {
+            throw new Exception("This activity name is already in use");
+        }
+
+        activity.Name = newname;
+        return await context.SaveChangesAsync() >= 1;
     }
 
     /// <summary>
