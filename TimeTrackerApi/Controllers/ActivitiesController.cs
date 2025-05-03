@@ -39,7 +39,7 @@ public class ActivitiesController : ControllerBase
         var projects = await projectActivityService.GetProjectsByActivityId(activityId);
         if (!projects.Any())
         {
-            return NotFound("No projects found for this activity.");
+            return Ok(new List<ProjectActivityDto>());
         }
         var result = projects.Select(a => new ProjectActivityDto
         {
@@ -97,17 +97,12 @@ public class ActivitiesController : ControllerBase
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    [HttpPut("{activityId}")]
+    [HttpPatch("{activityId}")]
     [Authorize]
     public async Task<IActionResult> UpdateActivity([FromBody] UpdateActivityDto dto, int activityId)
     {
         try
         {
-            if (dto.updateName && string.IsNullOrWhiteSpace(dto.newName))
-            {
-                return BadRequest("New name must be provided when updating the name.");
-            }
-
             var activity = await activityService.GetActivityById(activityId);
             if (activity == null)
             {
@@ -115,18 +110,13 @@ public class ActivitiesController : ControllerBase
             }
 
             bool result = false;
-            if (dto.updateName)
-            {
+
+            if (!string.IsNullOrEmpty(dto.newName))
                 result = await activityService.UpdateActivityName(activityId, dto.newName);
-            }
-            if (activity.StatusId != 3 && dto.archived)
-            {
+            if (dto.archived && activity.StatusId != 3)
                 result = await activityService.ChangeStatus(activityId, 3);
-            }
-            if (activity.StatusId != 1 && !dto.archived)
-            {
+            if (!dto.archived && activity.StatusId == 3)
                 result = await activityService.ChangeStatus(activityId, 1);
-            }
 
             if (!result)
                 return StatusCode(500, "Failed to update activity due to server error.");
@@ -160,8 +150,7 @@ public class ActivitiesController : ControllerBase
 
 public class UpdateActivityDto
 {
-    public bool updateName { get; set; }
-    public bool archived { get; set; }
+    public bool archived { get; set; } = false;
     public string? newName { get; set; }
 }
 public class AddActivityDto

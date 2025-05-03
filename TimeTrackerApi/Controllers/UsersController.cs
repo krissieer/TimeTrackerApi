@@ -97,7 +97,7 @@ public class UsersController : ControllerBase
     /// <returns></returns>
     [HttpGet("{userId}/activities")]
     [Authorize]
-    public async Task<ActionResult> GetActivities(int userId, [FromQuery] bool? onlyArchived, [FromQuery] bool? onlyInProcess, [FromQuery] bool? onlyActive)
+    public async Task<ActionResult> GetActivities(int userId, bool? onlyArchived, bool? onlyInProcess, bool? onlyActive)
     {
         if (onlyArchived == true && onlyActive == true || onlyArchived == true && onlyInProcess == true)
         {
@@ -151,7 +151,7 @@ public class UsersController : ControllerBase
     /// <param name="dto"></param>
     /// <returns></returns>
     [HttpPost]
-    public async Task<IActionResult> RegistrtationLogin([FromBody] AuthDto dto)
+    public async Task<IActionResult> AddNewUser([FromBody] AuthDto dto)
     {
         if (!ModelState.IsValid) 
         {
@@ -160,18 +160,9 @@ public class UsersController : ControllerBase
         string token;
         try
         {
-            if (dto.isNewUser)
-            {
-                token = await userService.Registration(dto.name, dto.password, dto.chatId);
-                if (string.IsNullOrEmpty(token))
-                    return Conflict("This username is already in use");
-            }
-            else
-            {
-                token = await userService.Login(dto.name, dto.password);
-                if (string.IsNullOrEmpty(token))
-                    return Unauthorized("Username or password is wrong");
-            }
+            token = await userService.Registration(dto.name, dto.password, dto.chatId);
+            if (string.IsNullOrEmpty(token))
+                return Conflict("This username is already in use");
             return Ok(new { Token = token });
         }
         catch (Exception ex) { return BadRequest(ex); }  
@@ -213,7 +204,7 @@ public class UsersController : ControllerBase
     /// <param name="dto"></param>
     /// <param name="userId"></param>
     /// <returns></returns>
-    [HttpPut("{userId}")]
+    [HttpPatch("{userId}")]
     [Authorize]
     public async Task<ActionResult> EditUser([FromBody] EditUserDto dto, int userId)
     {
@@ -228,12 +219,14 @@ public class UsersController : ControllerBase
                 return Conflict("You do not have an access for edit user info");
 
             bool updated = false;
-            if (dto.updateName && dto.updatePassword)
-                updated = await userService.UpdateUser(userId, dto.userName, dto.password);
-            else if (dto.updateName && !dto.updatePassword)
-                updated = await userService.UpdateUser(userId, dto.userName);
-            else if (!dto.updateName && dto.updatePassword)
+
+            if (!string.IsNullOrEmpty(dto.userName) && string.IsNullOrEmpty(dto.password))
+                updated = await userService.UpdateUser(userId, dto.userName, null);
+            else if (!string.IsNullOrEmpty(dto.password) && string.IsNullOrEmpty(dto.userName))
                 updated = await userService.UpdateUser(userId, null, dto.password);
+            else if (!string.IsNullOrEmpty(dto.userName) && !string.IsNullOrEmpty(dto.password))
+                updated = await userService.UpdateUser(userId, dto.userName, dto.password);
+
             if (!updated)
                 StatusCode(500, "Failed to edit user due to server error.");
 
@@ -268,24 +261,6 @@ public class UsersController : ControllerBase
     }
 }
 
-public class AuthDto
-{
-    [Required]
-    public bool isNewUser { get; set; }
-    [Required]
-    public string name { get; set; } = string.Empty;
-    [Required]
-    [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
-    public string password { get; set; } = string.Empty;
-    public int chatId { get; set; } = 0;
-}
-
-//public class AuthTelegramDto
-//{
-//    public string name { get; set; }
-//    public int chatId { get; set; } = 0;
-//}
-
 public class UserDto
 {
     public int id { get; set; }
@@ -304,11 +279,9 @@ public class ActivityDto
 
 public class EditUserDto
 {
-    public bool updateName { get; set; }
-    public bool updatePassword { get; set; }
-    public string? userName { get; set; } = string.Empty;
+    public string? userName { get; set; }
     [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
-    public string? password { get; set; } = string.Empty;
+    public string? password { get; set; }
 }
 
 public class ConnectToProjectDto

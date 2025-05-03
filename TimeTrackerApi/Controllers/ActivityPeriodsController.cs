@@ -55,16 +55,16 @@ public class ActivityPeriodsController : ControllerBase
         var statistic = new List<ActivityPeriod>();
         TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
 
-        if (data1.HasValue && data2.HasValue) // промежуток времени
+        // промежуток времени
+        if (data1.HasValue && data2.HasValue) 
             statistic = await activityPeriodService.GetStatistic(activityId, userId, data1, data2);
-
         // определенный день
         else if (data1.HasValue && !data2.HasValue)
             statistic = await activityPeriodService.GetStatistic(activityId, userId, data1);
         else if (!data1.HasValue && data2.HasValue)
             statistic = await activityPeriodService.GetStatistic(activityId, userId, data2);
-        else
-            statistic = await activityPeriodService.GetStatistic(activityId, userId); //весь период
+        else //весь период
+            statistic = await activityPeriodService.GetStatistic(activityId, userId); 
 
         if (!statistic.Any())
             return Ok(new List<ActivityPeriod>());
@@ -114,7 +114,7 @@ public class ActivityPeriodsController : ControllerBase
 
             if (actPeriod is null || !actPeriod.Any())
             {
-                return BadRequest(dto.isStarted ? "Failed to start tracking." : "Failed to stop tracking.");
+                return StatusCode(500, dto.isStarted ? "Failed to start tracking." : "Failed to stop tracking.");
             }
 
             var response = actPeriod.Select(actPeriod => new ActivityPeriodDto
@@ -140,7 +140,7 @@ public class ActivityPeriodsController : ControllerBase
     /// <param name="dto"></param>
     /// <param name="activityPeriodId"></param>
     /// <returns></returns>
-    [HttpPut("{activityPeriodId}")]
+    [HttpPatch("{activityPeriodId}")]
     [Authorize]
     public async Task<ActionResult> UpdateTime([FromBody] UpdatePeriodDto dto, int activityPeriodId)
     {
@@ -152,7 +152,7 @@ public class ActivityPeriodsController : ControllerBase
             int authorizedUserId = int.Parse(user);
 
             if (!dto.newStartTime.HasValue && !dto.newStopTime.HasValue)
-                return BadRequest("Time has an invalid foramt or it is null");
+                return BadRequest("Time has an invalid format or it is null");
 
             var activityPeriod = await activityPeriodService.GetActivityPeriodById(activityPeriodId);
             if (activityPeriod is null)
@@ -170,7 +170,7 @@ public class ActivityPeriodsController : ControllerBase
                 result = await activityPeriodService.UpdateActivityPeriod(activityPeriodId, authorizedUserId, null, dto.newStopTime);
 
             if (result is null)
-                return BadRequest("You can not edit this record");
+                return StatusCode(500, "Failed to update tracking record");
 
             TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Yekaterinburg");
             var resultDto = result.Select(period => new ActivityPeriodDto

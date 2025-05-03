@@ -92,18 +92,25 @@ namespace TimeTrackerApi.Controllers
                 return Unauthorized("User not authenticated.");
             int user_Id = int.Parse(USER);
 
-            var project = await projectService.AddProject(dto.projectName); //добавление пользователя в Projects
+            var project = await projectService.AddProject(dto.projectName); 
             if (project == null)
             {
-                return BadRequest();
+                return StatusCode(500, "Failed to add project");
             }
             var projectUser = await projectUserService.AddProjectUser(user_Id, project.Id, true); //Добавление пользователя в ProjectUsers
             if (projectUser == null)
             {
                 return Conflict("Project does not exist or the user is already assigned to this project.");
             }
-
-            return Ok(new { AccessKey = project.AccessKey });
+            var result = new ProjectDto
+            {
+                projectId = project.Id,
+                projectName = project.Name,
+                projectKey = project.AccessKey,
+                creationDate = project.CreationDate,
+                finishDate = project.FinishDate,
+            };
+            return Ok(result);
         }
 
         /// <summary>
@@ -111,7 +118,7 @@ namespace TimeTrackerApi.Controllers
         /// </summary>
         /// <param name="dto"></param>
         /// <returns></returns>
-        [HttpPut("{projectId}")]
+        [HttpPatch("{projectId}")]
         [Authorize]
         public async Task<ActionResult> UpdateProject([FromBody] EditProjectDto dto, int projectId)
         {
@@ -124,33 +131,31 @@ namespace TimeTrackerApi.Controllers
             if (!isCreator)
                 return Conflict("You don't have access to edit this project");
 
-            if (dto.closeProject)
+            if (!string.IsNullOrEmpty(dto.projectName))
             {
-                bool closed = await projectService.CloseProject(projectId);
-                if (closed)
-                    return Ok(closed);
-                else
-                    return BadRequest("Failed to close project");
-            }
-
-            if (dto.updateName)
-            {
-                var project = await projectService.UpdateProject(projectId, dto.projectName);
-                if (project == null)
+                var uptProject = await projectService.UpdateProject(projectId, dto.projectName);
+                if (uptProject == null)
                 {
                     return NotFound($"Project with ID {projectId} not found.");
                 }
-                var result = new ProjectDto
-                {
-                    projectId = project.Id,
-                    projectName = project.Name,
-                    projectKey = project.AccessKey,
-                    creationDate = project.CreationDate,
-                    finishDate = project.FinishDate,
-                };
-                return Ok(result);
+        
             }
-            return BadRequest("No update action was specified.");
+            if (dto.closeProject)
+            {
+                bool closed = await projectService.CloseProject(projectId);
+                if (!closed)
+                    return StatusCode(500, "Failed to close project");
+            }
+            var project = await projectService.GetProjectById(projectId);   
+            var result = new ProjectDto
+            {
+                projectId = project.Id,
+                projectName = project.Name,
+                projectKey = project.AccessKey,
+                creationDate = project.CreationDate,
+                finishDate = project.FinishDate,
+            };
+            return Ok(result);
         }
 
         /// <summary>
@@ -189,7 +194,7 @@ namespace TimeTrackerApi.Controllers
             var users = await projectUserService.GetUsersByProjectId(projectId);
             if (!users.Any())
             {
-                return NotFound($"No users found for project with ID {projectId}");
+                return Ok(new List<ProjectUserDto>());
             }
             var result = users.Select(a => new ProjectUserDto
             {
@@ -241,7 +246,7 @@ namespace TimeTrackerApi.Controllers
         /// <param name="userId"></param>
         /// <param name="projectId"></param>
         /// <returns></returns>
-        [HttpDelete("user/{projectId}/{userId}")]
+        [HttpDelete("{projectId}/user/{userId}")]
         [Authorize]
         public async Task<IActionResult> DeleteProjectUser(int projectId, int userId)
         {
@@ -277,7 +282,7 @@ namespace TimeTrackerApi.Controllers
             var activities = await projectActivityService.GetActivitiesByProjectId(projectId);
             if (!activities.Any() || activities == null)
             {
-                return NotFound("No activities found for this project ");
+                return Ok(new List<ProjectActivityDto>());
             }
             var result = activities.Select(a => new ProjectActivityDto
             {
@@ -320,7 +325,7 @@ namespace TimeTrackerApi.Controllers
             return Ok(response);
         }
 
-        [HttpDelete("activity/{projectId}/{activityId}")]
+        [HttpDelete("{projectId}/activity/{activityId}")]
         [Authorize]
         public async Task<IActionResult> DeleteProjectActivity(int projectId, int activityId)
         {
@@ -354,8 +359,7 @@ public class ProjectDto
 public class EditProjectDto
 {
     public bool closeProject { get; set; } = false;
-    public bool updateName { get; set; } = false;
-    public string projectName { get; set; }
+    public string? projectName { get; set; }
 }
 
 public class AddProjectDto
