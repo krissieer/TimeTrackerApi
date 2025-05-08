@@ -8,7 +8,7 @@ namespace TimeTrackerApi.Services.ActivityService
 
         Task<Activity?> GetActivityById(int activityId);
 
-        Task<bool> AddActivity(int userId, string name);
+        Task<Activity> AddActivity(int userId, string name);
 
         Task<bool> CheckActivityNameExistence(int userId, string name);
 

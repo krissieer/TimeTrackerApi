@@ -30,7 +30,7 @@ public class Program
 
         builder.Services.AddSwaggerGen(c =>
         {
-            c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Time Tracking API", Version = "v1" });
 
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
@@ -96,13 +96,6 @@ public class Program
 
         app.UseSwagger();
         app.UseSwaggerUI();
-
-        //app.UseSwagger();
-        //app.UseSwaggerUI(c =>
-        //{
-        //    c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-        //    c.RoutePrefix = string.Empty;
-        //});
 
         app.UseCors();
 

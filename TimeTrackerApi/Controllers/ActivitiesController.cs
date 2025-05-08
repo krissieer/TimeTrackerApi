@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using TimeTrackerApi.Models;
 using TimeTrackerApi.Services.ActivityService;
 using TimeTrackerApi.Services.ProjectActivityService;
@@ -84,12 +85,20 @@ public class ActivitiesController : ControllerBase
     [Authorize]
     public async Task<IActionResult> AddActivities([FromBody] AddActivityDto dto)
     {
-        bool result = await activityService.AddActivity(dto.userId, dto.activityName);
-
-        if (!result)
-            return Conflict("Activity with the same name already exists");
-
-        return Ok(result);
+        try
+        {
+            var activity = await activityService.AddActivity(dto.userId, dto.activityName);
+            var result = new ActivityDto
+            {
+                id = activity.Id,
+                name = activity.Name,
+                userId = activity.UserId,
+                activeFrom = activity.ActiveFrom,
+                statusId = activity.StatusId
+            };
+            return Ok(result);
+        }
+        catch (Exception ex) { return BadRequest(ex.Message); }
     }
 
     /// <summary>

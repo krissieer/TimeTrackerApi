@@ -53,10 +53,10 @@ public class ActivityService: IActivityService
     /// <param name="userId"></param>
     /// <param name="name"></param>
     /// <returns></returns>
-    public async Task<bool> AddActivity(int userId, string name)
+    public async Task<Activity> AddActivity(int userId, string name)
     {
         if (await CheckActivityNameExistence(userId, name))
-            return false;
+            throw new Exception("Activity with the same name already exists");
         else
         {
             var activity = new Activity
@@ -67,7 +67,8 @@ public class ActivityService: IActivityService
                 StatusId = 1
             };
             await context.Activities.AddAsync(activity);
-            return await context.SaveChangesAsync() >= 1;
+            await context.SaveChangesAsync();
+            return activity;
         }
     }
 
