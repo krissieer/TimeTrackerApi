@@ -26,9 +26,7 @@ services:
       context: .
       target: final
     environment:
-      DATABASE_URL: ${DATABASE_URL} 
-    env_file:
-      - .env.local
+      DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
     ports:
       - "8080:8080" 
     depends_on:
@@ -43,9 +41,7 @@ services:
       target: build 
     entrypoint: ["dotnet", "ef", "database", "update"]
     environment:
-      DATABASE_URL: ${DATABASE_URL} 
-    env_file:
-      - .env.local 
+      DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
     depends_on:
       - db
     networks:
@@ -57,5 +53,3 @@ networks:
 
 volumes:
   postgres_data:
-
-

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization.Infrastructure;
+using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -33,7 +34,7 @@ public class TimeTrackerDbContext : DbContext
                 .AddEnvironmentVariables();
 
             IConfiguration configuration = builder.Build();
-            var connectionString = configuration["DbConnectionString"];
+            var connectionString = configuration["DB_CONNECTION_STRING"];
             Console.WriteLine($"Trying to connect to DB with connection string: {connectionString}");
             optionsBuilder.UseNpgsql(connectionString);
         }
