@@ -134,10 +134,17 @@ public class ActivityPeriodService: IActivityPeriodService
     /// <returns></returns>
     public async Task<List<ActivityPeriod>> StopTracking(int activityId, int userId)
     {
+        var activity = await context.Activities.FindAsync(activityId);
+        if (activity is null)
+            throw new Exception($"Activity {activityId} not found");
+
+        if (activity.StatusId == 1)
+            throw new Exception("This activity is not tracking");
+
         var result = await SetStopTime(activityId, userId);
         if (result is null)
             throw new Exception("Failed to stop");
-        var activity = await context.Activities.FindAsync(activityId);
+
         activity.StatusId = 1;
         await context.SaveChangesAsync();
         return result;
@@ -156,7 +163,7 @@ public class ActivityPeriodService: IActivityPeriodService
         var activityPeriod = await context.ActivityPeriods.FirstOrDefaultAsync(a => a.ActivityId == activityId && a.StartTime == startTime);
 
         if (activityPeriod is null)
-            throw new Exception("ActivityPeriod not found.");
+            throw new Exception($"ActivityPeriod for activity {activityId} not found.");
 
         DateTime stopTime = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
 
@@ -212,7 +219,7 @@ public class ActivityPeriodService: IActivityPeriodService
         var activityPeriod = await context.ActivityPeriods.OrderBy(a => a.Id).LastOrDefaultAsync(a => a.ActivityId == activityId && a.ExecutorId == userId);
 
         if (activityPeriod == null)
-            throw new Exception("Start time not found for the given activity ID.");
+            throw new Exception($"Start time not found for activity {activityId}");
 
         return activityPeriod.StartTime;    
     }
