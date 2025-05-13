@@ -29,6 +29,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./TimeTrackerApi/Dockerfile"
           push: true
           tags: ghcr.io/krissieer/timetrackerapi:dev
       - name: Notification
