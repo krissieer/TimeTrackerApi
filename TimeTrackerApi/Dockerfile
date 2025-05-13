@@ -8,13 +8,13 @@ WORKDIR /src
 RUN dotnet tool install --global dotnet-ef
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
-COPY ["TimeTrackerApi.csproj", "./"]
-RUN dotnet restore "./TimeTrackerApi.csproj"
+COPY ["TimeTrackerApi/TimeTrackerApi.csproj", "TimeTrackerApi/"]
+RUN dotnet restore "TimeTrackerApi/TimeTrackerApi.csproj"
 
 COPY . .
-WORKDIR "/src/."
+WORKDIR "/src/TimeTrackerApi"
 
-RUN dotnet build "./TimeTrackerApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "TimeTrackerApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
