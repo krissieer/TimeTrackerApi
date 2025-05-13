@@ -30,7 +30,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/{{ github.repository.lower() }}:dev
+          tags: ghcr.io/krissieer/timetrackerapi:dev
       - name: Notification
         if: success()
         run: |
