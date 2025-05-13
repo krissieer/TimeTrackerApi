@@ -22,5 +22,11 @@ RUN dotnet publish "./TimeTrackerApi.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 
 FROM base AS final
 WORKDIR /app
+RUN apt-get update && apt-get install -y wget \
+    && wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb \
+    && apt-get update \
+    && apt-get install -y dotnet-sdk-8.0
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "TimeTrackerApi.dll"]
