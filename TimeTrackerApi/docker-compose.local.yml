@@ -21,10 +21,8 @@ services:
         - postgres_data:/var/lib/postgresql/data
 
   timetracking_api:
+    image: ghcr.io/krissieer/timetrackerapi:dev
     container_name: timetracking_api.local
-    build:
-      context: .
-      target: final
     environment:
       DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
     ports:
@@ -35,10 +33,8 @@ services:
         - default
 
   migrate:
+    image: ghcr.io/krissieer/timetrackerapi:dev
     container_name: migrate_db
-    build:
-      context: .
-      target: build 
     entrypoint: ["dotnet", "ef", "database", "update"]
     environment:
       DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
