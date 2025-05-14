@@ -37,7 +37,7 @@ services:
     build:
       context: .
     working_dir: /src/TimeTrackerApi
-    entrypoint: ["dotnet", "ef", "database", "update"]
+    entrypoint: ["dotnet", "ef", "database", "update", "--project", "/src/TimeTrackerApi/TimeTrackerApi.csproj"]
     environment:
       DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
     depends_on:
