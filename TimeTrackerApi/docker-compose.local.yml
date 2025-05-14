@@ -35,10 +35,10 @@ services:
   migrate:
     container_name: migrate_db
     build:
-      context: .
+      context: ./TimeTrackerApi
       dockerfile: Dockerfile.migrations
-    working_dir: /src/TimeTrackerApi
-    entrypoint: ["dotnet", "ef", "database", "update", "--project", "/src/TimeTrackerApi/TimeTrackerApi.csproj"]
+    working_dir: /src
+    entrypoint: ["dotnet", "ef", "database", "update", "--project", "/src/TimeTrackerApi.csproj"]
     environment:
       DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
     depends_on:
