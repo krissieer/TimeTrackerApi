@@ -2,9 +2,10 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS migrate
 
 WORKDIR /src
 
-COPY ./TimeTrackerApi.csproj /src/TimeTrackerApi/
-COPY . /src/TimeTrackerApi/
+COPY ["TimeTrackerApi/TimeTrackerApi.csproj", "TimeTrackerApi/"]
+RUN dotnet restore "TimeTrackerApi/TimeTrackerApi.csproj"
 
-RUN dotnet restore "/src/TimeTrackerApi/TimeTrackerApi.csproj"
+COPY . .
+WORKDIR "/src/TimeTrackerApi"
 
-ENTRYPOINT ["dotnet", "ef", "database", "update", "--project", "/src/TimeTrackerApi/TimeTrackerApi.csproj"]
+ENTRYPOINT ["dotnet", "ef", "database", "update"]

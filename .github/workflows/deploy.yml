@@ -28,14 +28,14 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./TimeTrackerApi 
+          context: .
           file: ./TimeTrackerApi/Dockerfile
           push: true
           tags: ghcr.io/krissieer/timetrackerapi:dev
       - name: Build and push migrations Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./TimeTrackerApi 
+          context: .
           file: ./TimeTrackerApi/Dockerfile.migrations
           push: true
           tags: ghcr.io/krissieer/timetrackerapi-migrations:dev
