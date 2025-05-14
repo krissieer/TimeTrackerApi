@@ -10,6 +10,7 @@ using TimeTrackerApi.Services.ProjectService;
 using TimeTrackerApi.Services.ProjectUserService;
 using TimeTrackerApi.Services.UserService;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace TimeTrackerApi;
 
@@ -88,7 +89,21 @@ public class Program
         });
 
         var app = builder.Build();
-        
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            try
+            {
+                var context = services.GetRequiredService<TimeTrackerDbContext>();
+                context.Database.Migrate(); 
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Ошибка при миграции БД: " + ex.Message);
+            }
+        }
+
         app.UseRouting();
 
         app.UseAuthentication();
