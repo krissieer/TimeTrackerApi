@@ -277,6 +277,15 @@ public class ActivityDto
     public int statusId { get; set; }
 }
 
+//public class AddUserDto
+//{
+//    [Required]
+//    public string name { get; set; } = string.Empty;
+//    [Required]
+//    [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
+//    public string password { get; set; } = string.Empty;
+//}
+
 public class EditUserDto
 {
     public string? userName { get; set; }

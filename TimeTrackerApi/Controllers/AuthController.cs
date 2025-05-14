@@ -27,27 +27,9 @@ public class AuthController : Controller
         string token;
         try
         {
-            token = await userService.Login(dto.name, dto.password);
+            token = await userService.Login(dto.name, dto.password, dto.chatId);
             if (string.IsNullOrEmpty(token))
                 return Unauthorized("Username or password is wrong");
-            return Ok(new { Token = token });
-        }
-        catch (Exception ex) { return BadRequest(ex); }
-    }
-
-    [HttpPost("login-chatId")]
-    public async Task<IActionResult> LoginByChatId([FromBody] AuthChatIdDto dto)
-    {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-        string token;
-        try
-        {
-            token = await userService.LoginByChatId(dto.chatId);
-            if (string.IsNullOrEmpty(token))
-                return Unauthorized("ChatId is wrong");
             return Ok(new { Token = token });
         }
         catch (Exception ex) { return BadRequest(ex); }
@@ -61,10 +43,5 @@ public class AuthDto
     [Required]
     [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
     public string password { get; set; } = string.Empty;
-}
-
-public class AuthChatIdDto
-{
-    [Required]
     public int chatId { get; set; } = 0;
 }
