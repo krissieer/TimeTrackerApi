@@ -14,7 +14,7 @@ public interface IUserService
 
     Task<string> Registration(string name, string password, int chatId = 0);
 
-    Task<string> Login(string name, string password, long chatid = 0);
+    Task<string> Login(string name, string password);
 
     Task<string> LoginByChatId(long chatId);
 
