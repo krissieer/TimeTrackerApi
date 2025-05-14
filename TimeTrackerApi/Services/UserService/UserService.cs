@@ -98,15 +98,12 @@ public class UserService:IUserService
     /// <param name="name"></param>
     /// <param name="password"></param>
     /// <returns></returns>
-    public async Task<string> Login(string name, string password, long chatId)
+    public async Task<string> Login(string name, string password)
     {
         try
         {
             var userInBD = await context.Users.FirstOrDefaultAsync(u => u.Name == name);
             if (userInBD == null)
-                return string.Empty;
-
-            if (userInBD.ChatId != chatId)
                 return string.Empty;
 
             if (!PasswordHasher.VerifyPassword(password, userInBD.PasswordHash))
@@ -115,6 +112,22 @@ public class UserService:IUserService
             return TokenGeneration.GenerateToken(userInBD.Id);
         }
         catch(Exception ex)
+        {
+            throw new Exception($"Login error: {ex.Message}");
+        }
+    }
+
+    public async Task<string> LoginByChatId(long chatId)
+    {
+        try
+        {
+            var userInBD = await context.Users.FirstOrDefaultAsync(u => u.ChatId == chatId);
+            if (userInBD == null)
+                return string.Empty;
+
+            return TokenGeneration.GenerateToken(userInBD.Id);
+        }
+        catch (Exception ex)
         {
             throw new Exception($"Login error: {ex.Message}");
         }

@@ -16,6 +16,8 @@ public interface IUserService
 
     Task<string> Login(string name, string password, long chatid = 0);
 
+    Task<string> LoginByChatId(long chatId);
+
     Task<bool> UpdateUser(int userId, string? newName = null, string? newPassword = null);
 
     Task<bool> DeleteUser(int id);
