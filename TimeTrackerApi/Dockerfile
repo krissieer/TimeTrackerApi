@@ -5,7 +5,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-COPY ["TimeTrackerApi/TimeTrackerApi.csproj", "TimeTrackerApi/"]
+COPY ["TimeTrackerApi.csproj", "."]
 RUN dotnet restore "TimeTrackerApi/TimeTrackerApi.csproj"
 
 COPY . .

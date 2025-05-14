@@ -2,8 +2,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS migrate
 
 WORKDIR /src
 
-COPY ./TimeTrackerApi/TimeTrackerApi.csproj /src/TimeTrackerApi/
-COPY ./TimeTrackerApi/ /src/TimeTrackerApi/
+COPY ./TimeTrackerApi.csproj /src/TimeTrackerApi/
+COPY . /src/TimeTrackerApi/
 
 RUN dotnet restore "/src/TimeTrackerApi/TimeTrackerApi.csproj"
 
