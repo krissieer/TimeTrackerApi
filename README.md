@@ -56,3 +56,40 @@ docker-compose -f docker-compose.local.yml down –v
 
 ```
 ## Запуск на сервере
+1. Загрузите docker-образы:
+```
+docker pull ghcr.io/krissieer/timetrackerapi:dev
+docker pull ghcr.io/krissieer/timetrackerapi-migrations:dev
+```
+2. Создайте docker-сеть
+```
+docker network create timetracker-net
+
+```
+3. Запустите контейнер с базой данных
+```
+docker run -d --name postgresBD --network timetracker-net -e POSTGRES_USER=имя_пользователя -e POSTGRES_PASSWORD=пароль -e POSTGRES_DB=название_БД postgres
+
+```
+4. Запустите контейнер с мигрциями
+```
+docker run --rm --network timetracker-net -e DB_CONNECTION_STRING="Host=postgresBD;Port=5432;Database=название_БД;Username=имя_пользователя;Password=пароль" ghcr.io/krissieer/timetrackerapi-migrations:dev
+
+```
+5. Запустите контейнер с api
+```
+docker run -d --name timetracking_api --network timetracker-net -e DB_CONNECTION_STRING="Host=postgresBD;Port=5432;Database=название_БД;Username=имя_пользователя;Password=пароль" -p 8080:8080 ghcr.io/krissieer/timetrackerapi:dev
+
+```
+
+## Остановка контейнера
+Для остановки контейнера:
+```
+docker stop название_контейнера
+
+```
+Для удаления контейнера:
+```
+docker rm название_контейнера 
+
+```
