@@ -33,9 +33,11 @@ services:
         - default
 
   migrate:
-    image: ghcr.io/krissieer/timetrackerapi:dev
     container_name: migrate_db
-    command: ["bash", "-c", "dotnet ef database update"]
+    build:
+      context: .
+    working_dir: /src/TimeTrackerApi
+    entrypoint: ["dotnet", "ef", "database", "update"]
     environment:
       DB_CONNECTION_STRING: ${DB_CONNECTION_STRING}
     depends_on:

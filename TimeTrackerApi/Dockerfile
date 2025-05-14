@@ -28,5 +28,10 @@ RUN apt-get update && apt-get install -y wget \
     && rm packages-microsoft-prod.deb \
     && apt-get update \
     && apt-get install -y dotnet-sdk-8.0
+
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="${PATH}:/root/.dotnet/tools"
+COPY --from=build /src /src
+
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "TimeTrackerApi.dll"]
