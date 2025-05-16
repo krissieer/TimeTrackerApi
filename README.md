@@ -23,14 +23,14 @@ https://github.com/krissieer/TimeTrackerApi.git
 POSTGRES_DB=название базы данных
 POSTGRES_USER=имя пользователя базы данных
 POSTGRES_PASSWORD=пароль для подключения к базе данных
-DB_CONNECTION_STRING='строка подключения к базе данных'
+DB_CONNECTION_STRING='Host=db;Database=DBName;Username=UserName;Password=DBPassword'
 ```
 * или через перемнные окружения:
 ```
 $env:POSTGRES_USER = "имя пользователя базы данных"
 $env:POSTGRES_PASSWORD = "пароль для подключения к базе данных"
 $env:POSTGRES_DB = "название базы данных"
-$env:DB_CONNECTION_STRING = "строка подключения к базе данных"
+$env:DB_CONNECTION_STRING = "Host=db;Database=DBName;Username=UserName;Password=DBPassword"
 ```
 3. Для запуска контейнра используйте
 * если параметры подключения к базе данных задавались в файле .env.local:
