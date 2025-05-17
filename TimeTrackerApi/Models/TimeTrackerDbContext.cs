@@ -35,7 +35,6 @@ public class TimeTrackerDbContext : DbContext
 
             IConfiguration configuration = builder.Build();
             var connectionString = configuration["DB_CONNECTION_STRING"];
-            Console.WriteLine($"Trying to connect to DB with connection string: {connectionString}");
             optionsBuilder.UseNpgsql(connectionString);
         }
     }
