@@ -20,17 +20,17 @@ https://github.com/krissieer/TimeTrackerApi.git
 2. Инициализируйте параметры подключения к базе данных
 *  в файле .env.local:
 ```
-POSTGRES_DB=название базы данных
-POSTGRES_USER=имя пользователя базы данных
-POSTGRES_PASSWORD=пароль для подключения к базе данных
-DB_CONNECTION_STRING='строка подключения к базе данных'
+POSTGRES_DB=DBName
+POSTGRES_USER=UserName
+POSTGRES_PASSWORD=DBPassword
+DB_CONNECTION_STRING='Host=db;Database=DBName;Username=UserName;Password=DBPassword'
 ```
 * или через перемнные окружения:
 ```
-$env:POSTGRES_USER = "имя пользователя базы данных"
-$env:POSTGRES_PASSWORD = "пароль для подключения к базе данных"
-$env:POSTGRES_DB = "название базы данных"
-$env:DB_CONNECTION_STRING = "строка подключения к базе данных"
+$env:POSTGRES_USER = "UserName"
+$env:POSTGRES_PASSWORD = "DBPassword"
+$env:POSTGRES_DB = "DBName"
+$env:DB_CONNECTION_STRING = "Host=db;Database=DBName;Username=UserName;Password=DBPassword"
 ```
 3. Для запуска контейнра используйте
 * если параметры подключения к базе данных задавались в файле .env.local:
@@ -59,7 +59,7 @@ docker-compose -f docker-compose.local.yml down –v
 1. Загрузите docker-образы:
 ```
 docker pull ghcr.io/krissieer/timetrackerapi:dev
-docker pull ghcr.io/krissieer/timetrackerapi-migrations:dev
+
 ```
 2. Создайте docker-сеть
 ```
@@ -71,12 +71,7 @@ docker network create timetracker-net
 docker run -d --name postgresBD --network timetracker-net -e POSTGRES_USER=имя_пользователя -e POSTGRES_PASSWORD=пароль -e POSTGRES_DB=название_БД postgres
 
 ```
-4. Запустите контейнер с мигрциями
-```
-docker run --rm --network timetracker-net -e DB_CONNECTION_STRING="Host=postgresBD;Port=5432;Database=название_БД;Username=имя_пользователя;Password=пароль" ghcr.io/krissieer/timetrackerapi-migrations:dev
-
-```
-5. Запустите контейнер с api
+4. Запустите контейнер с api
 ```
 docker run -d --name timetracking_api --network timetracker-net -e DB_CONNECTION_STRING="Host=postgresBD;Port=5432;Database=название_БД;Username=имя_пользователя;Password=пароль" -p 8080:8080 ghcr.io/krissieer/timetrackerapi:dev
 
