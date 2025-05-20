@@ -34,19 +34,6 @@ public class AuthController : Controller
         }
         catch (Exception ex) { return BadRequest(ex); }
     }
-
-    [HttpGet("log-error")]
-    public IActionResult TriggerError()
-    {
-        try
-        {
-            throw new InvalidOperationException("Тестовое исключение для проверки логов");
-        }
-        catch (Exception)
-        {
-            throw; 
-        }
-    }
 }
 
 public class AuthDto
