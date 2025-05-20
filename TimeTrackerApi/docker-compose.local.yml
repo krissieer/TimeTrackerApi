@@ -19,6 +19,7 @@ services:
         - default
     volumes:
         - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
   timetracking_api:
     image: ghcr.io/krissieer/timetrackerapi:dev

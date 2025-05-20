@@ -34,6 +34,12 @@ public class AuthController : Controller
         }
         catch (Exception ex) { return BadRequest(ex); }
     }
+
+    [HttpGet("test-error")]
+    public IActionResult TestError()
+    {
+        throw new Exception("Проверка логов");
+    }
 }
 
 public class AuthDto

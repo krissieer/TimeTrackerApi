@@ -11,6 +11,7 @@ using TimeTrackerApi.Services.ProjectUserService;
 using TimeTrackerApi.Services.UserService;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Diagnostics;
 
 namespace TimeTrackerApi;
 
@@ -105,6 +106,24 @@ public class Program
         }
 
         app.UseRouting();
+
+        app.UseExceptionHandler(errorApp =>
+        {
+            errorApp.Run(async context =>
+            {
+                var errorFeature = context.Features.Get<IExceptionHandlerFeature>();
+                var exception = errorFeature.Error;
+
+                var errorDto = new
+                {
+                    Message = exception.Message,
+                    StackTrace = exception.StackTrace
+                };
+
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                await context.Response.WriteAsJsonAsync(errorDto);
+            });
+        });
 
         app.UseAuthentication();
         app.UseAuthorization();
