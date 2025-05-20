@@ -35,10 +35,17 @@ public class AuthController : Controller
         catch (Exception ex) { return BadRequest(ex); }
     }
 
-    [HttpGet("test-error")]
-    public IActionResult TestError()
+    [HttpGet("log-error")]
+    public IActionResult TriggerError()
     {
-        throw new Exception("Проверка логов");
+        try
+        {
+            throw new InvalidOperationException("Тестовое исключение для проверки логов");
+        }
+        catch (Exception)
+        {
+            throw; 
+        }
     }
 }
 
