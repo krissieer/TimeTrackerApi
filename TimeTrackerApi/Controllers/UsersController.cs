@@ -31,6 +31,7 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <returns></returns>
     [HttpGet]
+    [Authorize]
     public async Task<ActionResult> GetUsers()
     {
         var users = await userService.GetUsers() ?? new List<User>();
@@ -53,6 +54,7 @@ public class UsersController : ControllerBase
     /// </summary>
     /// <returns></returns>
     [HttpGet("{userId}")]
+    [Authorize]
     public async Task<ActionResult> GetUserById(int userId)
     {
         var user = await userService.GetUserById(userId);
@@ -71,6 +73,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("by-chatId/{chatId}")]
+    [Authorize]
     public async Task<ActionResult> GetUserByChatId(long chatId)
     {
         var user = await userService.GetUserByChatId(chatId);
@@ -276,15 +279,6 @@ public class ActivityDto
     public int userId { get; set; }
     public int statusId { get; set; }
 }
-
-//public class AddUserDto
-//{
-//    [Required]
-//    public string name { get; set; } = string.Empty;
-//    [Required]
-//    [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
-//    public string password { get; set; } = string.Empty;
-//}
 
 public class EditUserDto
 {
