@@ -21,12 +21,15 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddControllers()
-             .AddJsonOptions(options =>
-             {
-                 options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
-                 options.JsonSerializerOptions.PropertyNamingPolicy = null;
-             });
+        builder.Services.AddControllers(options =>
+        {
+            options.Filters.Add<CustomExceptionFilter>(); 
+        })
+        .AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
+            options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        });
 
         builder.Services.AddEndpointsApiExplorer();
 
@@ -114,11 +117,22 @@ public class Program
                 var errorFeature = context.Features.Get<IExceptionHandlerFeature>();
                 var exception = errorFeature.Error;
 
+                var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(exception, "Fallback exception handler");
+
+                context.Response.StatusCode = exception switch
+                {
+                    UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+                    KeyNotFoundException => StatusCodes.Status404NotFound,
+                    _ => StatusCodes.Status500InternalServerError
+                };
+
                 await context.Response.WriteAsJsonAsync(new
                 {
                     Message = exception.Message,
                     Type = exception.GetType().Name,
-                    Source = exception.Source
+                    Source = exception.Source,
+                    Status = context.Response.StatusCode
                 });
             });
         });
