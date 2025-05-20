@@ -114,14 +114,12 @@ public class Program
                 var errorFeature = context.Features.Get<IExceptionHandlerFeature>();
                 var exception = errorFeature.Error;
 
-                var errorDto = new
+                await context.Response.WriteAsJsonAsync(new
                 {
                     Message = exception.Message,
-                    StackTrace = exception.StackTrace
-                };
-
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                await context.Response.WriteAsJsonAsync(errorDto);
+                    Type = exception.GetType().Name,
+                    Source = exception.Source
+                });
             });
         });
 
