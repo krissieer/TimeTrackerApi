@@ -28,13 +28,9 @@ public class TimeTrackerDbContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables();
-
-            IConfiguration configuration = builder.Build();
-            var connectionString = configuration["DB_CONNECTION_STRING"];
+            var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+            if (string.IsNullOrEmpty(connectionString))
+                throw new InvalidOperationException("DB_CONNECTION_STRING is null or empty");
             optionsBuilder.UseNpgsql(connectionString);
         }
     }
